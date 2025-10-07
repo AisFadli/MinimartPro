@@ -1,6 +1,27 @@
 
 import React, { useEffect } from 'react';
 
+/**
+ * Safely parses JSON from localStorage.
+ * @param key The localStorage key.
+ * @param defaultValue The default value to return if parsing fails or key doesn't exist.
+ * @returns The parsed object or the default value.
+ */
+const safeJSONParse = (key: string, defaultValue: any) => {
+    try {
+        const item = localStorage.getItem(key);
+        // If item is null or undefined, return default value
+        if (item == null) {
+            return defaultValue;
+        }
+        return JSON.parse(item);
+    } catch (e) {
+        console.error(`Error parsing JSON from localStorage for key "${key}". Returning default value.`, e);
+        return defaultValue;
+    }
+};
+
+
 const App: React.FC = () => {
 
     const htmlBody = `
@@ -977,12 +998,13 @@ const App: React.FC = () => {
 
     useEffect(() => {
         // Data Storage
-        let products = JSON.parse(localStorage.getItem('products') || '[]');
-        let categories = JSON.parse(localStorage.getItem('categories') || '["Elektronik", "Makanan", "Minuman", "Pakaian"]');
-        let stockMovements = JSON.parse(localStorage.getItem('stockMovements') || '[]');
-        let orders = JSON.parse(localStorage.getItem('orders') || '[]');
-        let sales = JSON.parse(localStorage.getItem('sales') || '[]');
-        let settings = JSON.parse(localStorage.getItem('settings') || '{"minStockLimit":10,"currency":"IDR"}');
+        let products = safeJSONParse('products', []);
+        let categories = safeJSONParse('categories', ["Elektronik", "Makanan", "Minuman", "Pakaian"]);
+        let stockMovements = safeJSONParse('stockMovements', []);
+        let orders = safeJSONParse('orders', []);
+        let sales = safeJSONParse('sales', []);
+        let settings = safeJSONParse('settings', {"minStockLimit":10,"currency":"IDR"});
+        
         let editingProductId: string | null = null;
         let currentOrderFilter = 'all';
         let filteredSales: any[] = [];
