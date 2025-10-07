@@ -49,6 +49,35 @@ const App: React.FC = () => {
                 <p class="text-gray-600">Ringkasan stok dan aktivitas terkini</p>
             </div>
 
+            <!-- Dashboard Filters -->
+            <div class="bg-white rounded-xl card-shadow p-6 mb-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">Filter Laporan</h3>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Kategori</label>
+                        <select id="dashboard-category-filter" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                            <option value="">Semua Kategori</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Dari Tanggal</label>
+                        <input type="date" id="dashboard-date-from" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Sampai Tanggal</label>
+                        <input type="date" id="dashboard-date-to" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div class="flex items-end gap-2">
+                        <button onclick="applyDashboardFilter()" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">
+                            <i class="fas fa-filter mr-2"></i>Filter
+                        </button>
+                        <button onclick="resetDashboardFilter()" class="w-full bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded-lg transition-colors">
+                            <i class="fas fa-sync-alt mr-2"></i>Reset
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             <!-- Stats Cards -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 <div class="bg-white p-6 rounded-xl card-shadow">
@@ -87,12 +116,31 @@ const App: React.FC = () => {
                 <div class="bg-white p-6 rounded-xl card-shadow">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-gray-500 text-sm">Transaksi Hari Ini</p>
+                            <p class="text-gray-500 text-sm">Transaksi Periode Ini</p>
                             <p class="text-2xl font-bold text-purple-600" id="today-transactions">0</p>
                         </div>
                         <div class="bg-purple-100 p-3 rounded-full">
                             <i class="fas fa-chart-line text-purple-600"></i>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+             <!-- Sales by Payment Method -->
+            <div class="bg-white rounded-xl card-shadow p-6 mb-8">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4">Ringkasan Penjualan <span id="sales-summary-period" class="text-base font-normal text-gray-500"></span></h3>
+                <div id="payment-method-summary" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-green-50 p-4 rounded-lg">
+                        <p class="text-green-600 font-medium">Penjualan Tunai (Cash)</p>
+                        <p class="text-2xl font-bold text-green-800" id="sales-cash">Rp 0</p>
+                    </div>
+                    <div class="bg-blue-50 p-4 rounded-lg">
+                        <p class="text-blue-600 font-medium">Penjualan Transfer</p>
+                        <p class="text-2xl font-bold text-blue-800" id="sales-transfer">Rp 0</p>
+                    </div>
+                    <div class="bg-yellow-50 p-4 rounded-lg">
+                        <p class="text-yellow-600 font-medium">Penjualan Belum Bayar</p>
+                        <p class="text-2xl font-bold text-yellow-800" id="sales-unpaid">Rp 0</p>
                     </div>
                 </div>
             </div>
@@ -158,6 +206,7 @@ const App: React.FC = () => {
                         </tbody>
                     </table>
                 </div>
+                <div id="products-pagination" class="px-6 py-4 border-t border-gray-200 flex items-center justify-between"></div>
             </div>
         </div>
 
@@ -216,6 +265,7 @@ const App: React.FC = () => {
                         </tbody>
                     </table>
                 </div>
+                 <div id="orders-pagination" class="px-6 py-4 border-t border-gray-200 flex items-center justify-between"></div>
             </div>
         </div>
 
@@ -317,6 +367,7 @@ const App: React.FC = () => {
                         </tbody>
                     </table>
                 </div>
+                <div id="sales-pagination" class="px-6 py-4 border-t border-gray-200 flex items-center justify-between"></div>
             </div>
         </div>
 
@@ -332,6 +383,7 @@ const App: React.FC = () => {
                 <div class="flex flex-col md:flex-row gap-4 items-end">
                     <div class="flex-1">
                         <label class="block text-sm font-medium text-gray-700 mb-2">Pilih Produk</label>
+                        <input type="text" id="stock-card-search" placeholder="Cari berdasarkan nama atau kode..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 mb-2">
                         <select id="stock-card-product" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
                             <option value="">Pilih produk untuk melihat kartu stok</option>
                         </select>
@@ -376,6 +428,7 @@ const App: React.FC = () => {
                         </tbody>
                     </table>
                 </div>
+                 <div id="stock-card-pagination" class="px-6 py-4 border-t border-gray-200 flex items-center justify-between"></div>
             </div>
         </div>
 
@@ -451,9 +504,9 @@ const App: React.FC = () => {
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Import Database Produk</label>
-                            <input type="file" id="import-file" accept=".json,.csv,.xlsx,.xls" 
+                            <input type="file" id="import-file" accept=".json,.csv" 
                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-                            <p class="text-xs text-gray-500 mt-1">Format: Excel (.xlsx/.xls), CSV, atau JSON dengan kolom: Kode Produk, Nama Produk, Kategori, HPP (Harga Pokok Penjualan), Harga Jual, Stok Saat Ini, Satuan, Deskripsi</p>
+                            <p class="text-xs text-gray-500 mt-1">Format yang didukung: <strong>CSV</strong> atau <strong>JSON</strong>. Gunakan template untuk format kolom yang benar.</p>
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                             <button onclick="downloadTemplate()" class="bg-orange-600 hover:bg-orange-700 text-white py-2 rounded-lg transition-colors">
@@ -677,6 +730,11 @@ const App: React.FC = () => {
                 </div>
                 <form id="create-order-form" class="space-y-4">
                     <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Cari Produk</label>
+                         <input type="text" id="order-product-search" placeholder="Ketik nama atau kode produk..."
+                                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 mb-2">
+                    </div>
+                    <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Produk</label>
                         <select id="order-product" required 
                                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
@@ -879,7 +937,7 @@ const App: React.FC = () => {
                         <i class="fas fa-times text-xl"></i>
                     </button>
                 </div>
-                <div id="receipt-content" class="font-mono text-sm">
+                <div id="receipt-content">
                     <!-- Receipt content will be populated here -->
                 </div>
                 <div class="flex gap-3 pt-6">
@@ -932,6 +990,15 @@ const App: React.FC = () => {
         // A mock user object since the original script seems to imply its existence for some actions
         const currentUser = { name: 'Admin' }; 
 
+        // Pagination State
+        const ITEMS_PER_PAGE = 20;
+        let currentPage = {
+            products: 1,
+            orders: 1,
+            sales: 1,
+            stockCard: 1
+        };
+
         // Initialize App
         const initializeApp = () => {
             updateDashboard();
@@ -943,12 +1010,14 @@ const App: React.FC = () => {
             loadSettings();
             
             // Event listeners
-            (document.getElementById('search-products') as HTMLInputElement).addEventListener('input', filterProducts);
-            (document.getElementById('category-filter') as HTMLSelectElement).addEventListener('change', filterProducts);
-            (document.getElementById('stock-card-product') as HTMLSelectElement).addEventListener('change', loadStockCard);
+            (document.getElementById('search-products') as HTMLInputElement).addEventListener('input', () => { currentPage.products = 1; filterProducts(); });
+            (document.getElementById('category-filter') as HTMLSelectElement).addEventListener('change', () => { currentPage.products = 1; filterProducts(); });
+            (document.getElementById('stock-card-product') as HTMLSelectElement).addEventListener('change', () => { currentPage.stockCard = 1; loadStockCard(); });
+            (document.getElementById('stock-card-search') as HTMLInputElement).addEventListener('input', handleStockCardSearch);
             (document.getElementById('sale-product') as HTMLSelectElement).addEventListener('change', updateSaleInfo);
             (document.getElementById('sale-quantity') as HTMLInputElement).addEventListener('input', updateSaleTotal);
             (document.getElementById('sale-product-search') as HTMLInputElement).addEventListener('input', searchSaleProducts);
+            (document.getElementById('order-product-search') as HTMLInputElement).addEventListener('input', handleOrderProductSearch);
             
             // Form submissions
             (document.getElementById('product-form') as HTMLFormElement).addEventListener('submit', handleProductSubmit);
@@ -958,6 +1027,39 @@ const App: React.FC = () => {
             
             // Set default dates
             setDefaultDates();
+            populateDashboardCategoryFilter();
+        }
+        
+        const populateStockCardSelect = (filteredProducts?: any[]) => {
+            const productList = filteredProducts || products;
+            const select = (document.getElementById('stock-card-product') as HTMLSelectElement);
+            const currentValue = select.value;
+
+            select.innerHTML = '<option value="">Pilih produk untuk melihat kartu stok</option>' +
+                productList.map((p: any) => `<option value="${p.id}">${p.name} (${p.code})</option>`).join('');
+            
+            // Restore selection if it still exists in the filtered list
+            if (productList.some((p: any) => p.id === currentValue)) {
+                select.value = currentValue;
+            }
+        }
+
+        const handleStockCardSearch = () => {
+            const searchTerm = (document.getElementById('stock-card-search') as HTMLInputElement).value.toLowerCase();
+            const filtered = products.filter((p: any) => 
+                p.name.toLowerCase().includes(searchTerm) || 
+                p.code.toLowerCase().includes(searchTerm)
+            );
+            populateStockCardSelect(filtered);
+        }
+
+        const handleOrderProductSearch = () => {
+            const searchTerm = (document.getElementById('order-product-search') as HTMLInputElement).value.toLowerCase();
+            const filtered = products.filter((p: any) => 
+                p.name.toLowerCase().includes(searchTerm) || 
+                p.code.toLowerCase().includes(searchTerm)
+            );
+            populateOrderProductSelects(filtered);
         }
 
         // Navigation
@@ -984,20 +1086,73 @@ const App: React.FC = () => {
         }
 
         // Dashboard Functions
-        const updateDashboard = () => {
-            const totalProducts = products.length;
-            const lowStockProducts = products.filter((p: any) => p.currentStock <= settings.minStockLimit).length;
-            const stockValue = products.reduce((total: number, p: any) => total + (p.currentStock * p.hpp), 0);
-            const todayTransactions = stockMovements.filter((m: any) => 
-                new Date(m.date).toDateString() === new Date().toDateString()
-            ).length;
+        const updateDashboard = (filters = {}) => {
+            const { category = '', dateFrom = '', dateTo = '' } = filters as any;
+
+            let filteredProducts = products;
+            if (category) {
+                filteredProducts = products.filter((p: any) => p.category === category);
+            }
+            
+            let filteredMovements = stockMovements;
+            let filteredSalesData = sales;
+
+            if (dateFrom && dateTo) {
+                const start = new Date(dateFrom).getTime();
+                const end = new Date(dateTo).setHours(23, 59, 59, 999);
+                
+                filteredMovements = stockMovements.filter((m: any) => {
+                    const movementDate = new Date(m.date).getTime();
+                    return movementDate >= start && movementDate <= end;
+                });
+                
+                filteredSalesData = sales.filter((s: any) => {
+                    const saleDate = new Date(s.saleDate || s.createdAt).getTime();
+                    return saleDate >= start && saleDate <= end;
+                });
+
+                const fromStr = new Date(dateFrom).toLocaleDateString('id-ID');
+                const toStr = new Date(dateTo).toLocaleDateString('id-ID');
+                 (document.getElementById('sales-summary-period') as HTMLElement).textContent = `(${fromStr} - ${toStr})`;
+
+            } else {
+                 (document.getElementById('sales-summary-period') as HTMLElement).textContent = '(Semua Waktu)';
+            }
+
+            const totalProducts = filteredProducts.length;
+            const lowStockProducts = filteredProducts.filter((p: any) => p.currentStock <= settings.minStockLimit).length;
+            const stockValue = filteredProducts.reduce((total: number, p: any) => total + (p.currentStock * p.hpp), 0);
+            const periodTransactions = filteredMovements.length;
 
             (document.getElementById('total-products') as HTMLElement).textContent = totalProducts.toString();
             (document.getElementById('low-stock') as HTMLElement).textContent = lowStockProducts.toString();
             (document.getElementById('stock-value') as HTMLElement).textContent = formatCurrency(stockValue);
-            (document.getElementById('today-transactions') as HTMLElement).textContent = todayTransactions.toString();
+            (document.getElementById('today-transactions') as HTMLElement).textContent = periodTransactions.toString();
+
+            // Sales by payment method
+            const salesCash = filteredSalesData.filter(s => s.paymentMethod === 'cash' && s.status !== 'indent').reduce((sum, s) => sum + s.totalAmount, 0);
+            const salesTransfer = filteredSalesData.filter(s => s.paymentMethod === 'transfer' && s.status !== 'indent').reduce((sum, s) => sum + s.totalAmount, 0);
+            const salesUnpaid = filteredSalesData.filter(s => s.status === 'unpaid' || s.status === 'indent').reduce((sum, s) => sum + s.totalAmount, 0);
+
+            (document.getElementById('sales-cash') as HTMLElement).textContent = formatCurrency(salesCash);
+            (document.getElementById('sales-transfer') as HTMLElement).textContent = formatCurrency(salesTransfer);
+            (document.getElementById('sales-unpaid') as HTMLElement).textContent = formatCurrency(salesUnpaid);
 
             renderRecentActivities();
+        }
+
+        const applyDashboardFilter = () => {
+            const category = (document.getElementById('dashboard-category-filter') as HTMLSelectElement).value;
+            const dateFrom = (document.getElementById('dashboard-date-from') as HTMLInputElement).value;
+            const dateTo = (document.getElementById('dashboard-date-to') as HTMLInputElement).value;
+            updateDashboard({ category, dateFrom, dateTo });
+        }
+
+        const resetDashboardFilter = () => {
+            (document.getElementById('dashboard-category-filter') as HTMLSelectElement).value = '';
+            (document.getElementById('dashboard-date-from') as HTMLInputElement).value = '';
+            (document.getElementById('dashboard-date-to') as HTMLInputElement).value = '';
+            updateDashboard();
         }
 
         const renderRecentActivities = () => {
@@ -1038,14 +1193,27 @@ const App: React.FC = () => {
 
         // Product Management
         const renderProducts = () => {
+            const searchTerm = (document.getElementById('search-products') as HTMLInputElement).value.toLowerCase();
+            const categoryFilterValue = (document.getElementById('category-filter') as HTMLSelectElement).value;
+            
+            const filteredData = products.filter((product: any) => {
+                const matchesSearch = product.name.toLowerCase().includes(searchTerm) || 
+                                    product.code.toLowerCase().includes(searchTerm);
+                const matchesCategory = !categoryFilterValue || product.category === categoryFilterValue;
+                return matchesSearch && matchesCategory;
+            });
+
+            const paginatedData = paginate(filteredData, currentPage.products, ITEMS_PER_PAGE);
+
             const tbody = (document.getElementById('products-table') as HTMLElement);
             
-            if (products.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" class="px-6 py-8 text-center text-gray-500">Belum ada produk. Klik "Tambah Produk" untuk memulai.</td></tr>';
+            if (paginatedData.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="px-6 py-8 text-center text-gray-500">Tidak ada produk yang ditemukan.</td></tr>';
+                renderPagination('products-pagination', currentPage.products, filteredData.length, ITEMS_PER_PAGE, changeProductsPage);
                 return;
             }
 
-            tbody.innerHTML = products.map((product: any) => {
+            tbody.innerHTML = paginatedData.map((product: any) => {
                 const stockStatus = product.currentStock <= settings.minStockLimit ? 
                     '<span class="px-2 py-1 text-xs font-semibold bg-red-100 text-red-800 rounded-full">Stok Rendah</span>' :
                     '<span class="px-2 py-1 text-xs font-semibold bg-green-100 text-green-800 rounded-full">Normal</span>';
@@ -1080,11 +1248,27 @@ const App: React.FC = () => {
                 `;
             }).join('');
 
+            renderPagination('products-pagination', currentPage.products, filteredData.length, ITEMS_PER_PAGE, changeProductsPage);
             populateFilters();
+        }
+
+        const changeProductsPage = (page: number) => {
+            currentPage.products = page;
+            renderProducts();
         }
 
         const populateFilters = () => {
             const categoryFilter = (document.getElementById('category-filter') as HTMLSelectElement);
+            const uniqueCategories = [...new Set(products.map((p: any) => p.category))];
+            
+            const currentVal = categoryFilter.value;
+            categoryFilter.innerHTML = '<option value="">Semua Kategori</option>' +
+                uniqueCategories.map(cat => `<option value="${cat}">${cat}</option>`).join('');
+            categoryFilter.value = currentVal;
+        }
+
+        const populateDashboardCategoryFilter = () => {
+            const categoryFilter = (document.getElementById('dashboard-category-filter') as HTMLSelectElement);
             const uniqueCategories = [...new Set(products.map((p: any) => p.category))];
             
             categoryFilter.innerHTML = '<option value="">Semua Kategori</option>' +
@@ -1092,61 +1276,7 @@ const App: React.FC = () => {
         }
 
         const filterProducts = () => {
-            const searchTerm = (document.getElementById('search-products') as HTMLInputElement).value.toLowerCase();
-            const categoryFilter = (document.getElementById('category-filter') as HTMLSelectElement).value;
-            
-            const filteredProducts = products.filter((product: any) => {
-                const matchesSearch = product.name.toLowerCase().includes(searchTerm) || 
-                                    product.code.toLowerCase().includes(searchTerm);
-                const matchesCategory = !categoryFilter || product.category === categoryFilter;
-                return matchesSearch && matchesCategory;
-            });
-
-            renderFilteredProducts(filteredProducts);
-        }
-
-        const renderFilteredProducts = (filteredProducts: any[]) => {
-            const tbody = (document.getElementById('products-table') as HTMLElement);
-            
-            if (filteredProducts.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" class="px-6 py-8 text-center text-gray-500">Tidak ada produk yang sesuai dengan filter.</td></tr>';
-                return;
-            }
-
-            tbody.innerHTML = filteredProducts.map(product => {
-                const stockStatus = product.currentStock <= settings.minStockLimit ? 
-                    '<span class="px-2 py-1 text-xs font-semibold bg-red-100 text-red-800 rounded-full">Stok Rendah</span>' :
-                    '<span class="px-2 py-1 text-xs font-semibold bg-green-100 text-green-800 rounded-full">Normal</span>';
-
-                return `
-                    <tr class="hover:bg-gray-50">
-                        <td class="px-6 py-4">
-                            <div>
-                                <div class="font-medium text-gray-900">${product.name}</div>
-                                <div class="text-sm text-gray-500">${product.code}</div>
-                            </div>
-                        </td>
-                        <td class="px-6 py-4 text-sm text-gray-900">${product.category}</td>
-                        <td class="px-6 py-4 text-sm text-gray-900">${formatCurrency(product.hpp)}</td>
-                        <td class="px-6 py-4 text-sm text-gray-900">${formatCurrency(product.price)}</td>
-                        <td class="px-6 py-4 text-sm text-gray-900">${product.currentStock} ${product.unit}</td>
-                        <td class="px-6 py-4">${stockStatus}</td>
-                        <td class="px-6 py-4 text-sm font-medium">
-                            <div class="flex space-x-2">
-                                <button onclick="viewProduct('${product.id}')" class="text-blue-600 hover:text-blue-900">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                                <button onclick="editProduct('${product.id}')" class="text-yellow-600 hover:text-yellow-900">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                                <button onclick="deleteProduct('${product.id}')" class="text-red-600 hover:text-red-900">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                `;
-            }).join('');
+            renderProducts();
         }
 
         // Product CRUD Operations
@@ -1370,6 +1500,7 @@ const App: React.FC = () => {
             
             if (!productId) {
                 tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-8 text-center text-gray-500">Pilih produk untuk melihat kartu stok</td></tr>';
+                (document.getElementById('stock-card-pagination') as HTMLElement).innerHTML = '';
                 if (productInfoDiv) {
                     productInfoDiv.classList.add('hidden');
                 }
@@ -1379,6 +1510,7 @@ const App: React.FC = () => {
             const product = products.find((p: any) => p.id === productId);
             if (!product) {
                 tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-8 text-center text-gray-500">Produk tidak ditemukan</td></tr>';
+                (document.getElementById('stock-card-pagination') as HTMLElement).innerHTML = '';
                 if (productInfoDiv) {
                     productInfoDiv.classList.add('hidden');
                 }
@@ -1426,23 +1558,32 @@ const App: React.FC = () => {
 
             const movements = stockMovements
                 .filter((m: any) => m.productId === productId)
-                .sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime());
+                .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime()); // Sort descending for latest first
 
-            if (movements.length === 0) {
+            const paginatedMovements = paginate(movements, currentPage.stockCard, ITEMS_PER_PAGE);
+
+            if (paginatedMovements.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-8 text-center text-gray-500">Belum ada pergerakan stok untuk produk ini</td></tr>';
+                renderPagination('stock-card-pagination', currentPage.stockCard, movements.length, ITEMS_PER_PAGE, changeStockCardPage);
                 return;
             }
+            
+            const lastPage = Math.ceil(movements.length / ITEMS_PER_PAGE);
+            const startingIndex = (lastPage - currentPage.stockCard) * ITEMS_PER_PAGE;
+            
+            let runningBalance = movements.slice(startingIndex + paginatedMovements.length).reduce((balance, movement) => {
+                 return movement.type === 'in' ? balance - movement.quantity : balance + movement.quantity;
+            }, product.currentStock);
 
-            let runningBalance = 0;
-            tbody.innerHTML = movements.map((movement: any) => {
-                if (movement.type === 'in') {
-                    runningBalance += movement.quantity;
-                } else {
+            tbody.innerHTML = paginatedMovements.map((movement: any) => {
+                const currentBalance = runningBalance;
+                 if (movement.type === 'in') {
                     runningBalance -= movement.quantity;
+                } else {
+                    runningBalance += movement.quantity;
                 }
-
                 // Calculate stock value based on current balance
-                const stockValue = runningBalance * product.hpp;
+                const stockValue = currentBalance * product.hpp;
                 const dateInfo = formatDate(movement.date);
                 const timeAgo = getTimeAgo(movement.date);
                 
@@ -1455,11 +1596,17 @@ const App: React.FC = () => {
                         <td class="px-6 py-4 text-sm text-gray-900">${movement.note}</td>
                         <td class="px-6 py-4 text-sm text-green-600">${movement.type === 'in' ? movement.quantity : '-'}</td>
                         <td class="px-6 py-4 text-sm text-red-600">${movement.type === 'out' ? movement.quantity : '-'}</td>
-                        <td class="px-6 py-4 text-sm font-medium text-gray-900">${runningBalance} ${product.unit}</td>
+                        <td class="px-6 py-4 text-sm font-medium text-gray-900">${currentBalance} ${product.unit}</td>
                         <td class="px-6 py-4 text-sm font-medium text-blue-600">${formatCurrency(stockValue)}</td>
                     </tr>
                 `;
             }).join('');
+             renderPagination('stock-card-pagination', currentPage.stockCard, movements.length, ITEMS_PER_PAGE, changeStockCardPage);
+        }
+
+        const changeStockCardPage = (page: number) => {
+            currentPage.stockCard = page;
+            loadStockCard();
         }
 
         // Settings Functions
@@ -1502,10 +1649,10 @@ const App: React.FC = () => {
         const loadSettings = () => {
             (document.getElementById('min-stock-limit') as HTMLInputElement).value = settings.minStockLimit;
             (document.getElementById('currency') as HTMLSelectElement).value = settings.currency;
-            (document.getElementById('store-name') as HTMLInputElement).value = settings.storeName || 'StokPro Store';
-            (document.getElementById('store-address') as HTMLTextAreaElement).value = settings.storeAddress || 'Jl. Contoh No. 123, Kota';
+            (document.getElementById('store-name') as HTMLInputElement).value = settings.storeName || 'Minimart An Nahl';
+            (document.getElementById('store-address') as HTMLTextAreaElement).value = settings.storeAddress || 'Jl. Pramuka No. 1, Jakarta';
             (document.getElementById('store-phone') as HTMLInputElement).value = settings.storePhone || '021-12345678';
-            (document.getElementById('store-email') as HTMLInputElement).value = settings.storeEmail || 'info@stokpro.com';
+            (document.getElementById('store-email') as HTMLInputElement).value = settings.storeEmail || 'info@minimart.com';
         }
 
         const saveSettings = () => {
@@ -1529,12 +1676,9 @@ const App: React.FC = () => {
         }
 
         const populateProductSelects = () => {
-            const selects = ['stock-card-product', 'stock-in-product', 'stock-out-product'];
-            selects.forEach(selectId => {
-                const select = (document.getElementById(selectId) as HTMLSelectElement);
-                select.innerHTML = '<option value="">Pilih produk</option>' +
-                    products.map((p: any) => `<option value="${p.id}">${p.name} (${p.code})</option>`).join('');
-            });
+            // This function is called when product data is globally updated.
+            // It should refresh the stock card select according to its current filter.
+            handleStockCardSearch();
         }
 
         const populateStockProductSelects = () => {
@@ -1666,15 +1810,19 @@ const App: React.FC = () => {
                 filteredOrders = orders.filter((order: any) => order.status === currentOrderFilter);
             }
             
-            if (filteredOrders.length === 0) {
+            const sortedOrders = filteredOrders.sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+            const paginatedOrders = paginate(sortedOrders, currentPage.orders, ITEMS_PER_PAGE);
+
+            if (paginatedOrders.length === 0) {
                 const message = currentOrderFilter === 'all' ? 
                     'Belum ada order. Klik "Buat Order" untuk memulai.' :
                     `Tidak ada order dengan status ${getStatusText(currentOrderFilter)}.`;
                 tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-gray-500">${message}</td></tr>`;
+                renderPagination('orders-pagination', currentPage.orders, sortedOrders.length, ITEMS_PER_PAGE, changeOrdersPage);
                 return;
             }
 
-            tbody.innerHTML = filteredOrders.map((order: any) => {
+            tbody.innerHTML = paginatedOrders.map((order: any) => {
                 const product = products.find((p: any) => p.id === order.productId);
                 const productName = product ? product.name : 'Produk tidak ditemukan';
                 const statusBadge = getStatusBadge(order.status);
@@ -1707,10 +1855,17 @@ const App: React.FC = () => {
                     </tr>
                 `;
             }).join('');
+            renderPagination('orders-pagination', currentPage.orders, sortedOrders.length, ITEMS_PER_PAGE, changeOrdersPage);
+        }
+
+        const changeOrdersPage = (page: number) => {
+            currentPage.orders = page;
+            renderOrders();
         }
 
         const filterOrders = (status: string, event: any) => {
             currentOrderFilter = status;
+            currentPage.orders = 1;
             
             // Update tab appearance
             document.querySelectorAll('.order-tab-btn').forEach(btn => {
@@ -1946,10 +2101,11 @@ const App: React.FC = () => {
             alert('Order berhasil dihapus!');
         }
 
-        const populateOrderProductSelects = () => {
+        const populateOrderProductSelects = (filteredList?: any[]) => {
             const select = (document.getElementById('order-product') as HTMLSelectElement);
+            const productList = filteredList || products;
             select.innerHTML = '<option value="">Pilih produk</option>' +
-                products.map((p: any) => `<option value="${p.id}">${p.name} (${p.code}) - Stok: ${p.currentStock}</option>`).join('');
+                productList.map((p: any) => `<option value="${p.id}">${p.name} (${p.code}) - Stok: ${p.currentStock}</option>`).join('');
         }
 
         // Excel Utility Functions
@@ -2047,29 +2203,114 @@ const App: React.FC = () => {
         const importDatabase = () => {
             const fileInput = (document.getElementById('import-file') as HTMLInputElement);
             const file = fileInput.files ? fileInput.files[0] : null;
-            
             if (!file) {
                 alert('Pilih file untuk diimport!');
                 return;
             }
 
-            alert('Fungsi import dari Excel/CSV memerlukan library pihak ketiga (seperti SheetJS) yang tidak disertakan dalam duplikasi ini. Silakan gunakan fungsi backup/restore JSON.');
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const content = e.target?.result as string;
+                    let rawData: any[] = [];
+                    
+                    if (file.name.endsWith('.json')) {
+                        rawData = JSON.parse(content);
+                        if (!Array.isArray(rawData)) throw new Error('File JSON harus berisi array produk.');
+                    } else if (file.name.endsWith('.csv')) {
+                        rawData = parseCSV(content);
+                    } else {
+                        throw new Error('Format file tidak didukung. Gunakan .csv atau .json.');
+                    }
+
+                    if (rawData.length === 0) {
+                        alert('Tidak ada produk yang ditemukan dalam file.');
+                        return;
+                    }
+                    
+                    let importedCount = 0;
+                    let skippedCount = 0;
+                    const existingCodes = new Set(products.map(p => p.code));
+
+                    rawData.forEach(p => {
+                        const productCode = p['Kode Produk'] || p.code;
+                        const productName = p['Nama Produk'] || p.name;
+                        
+                        if (!productCode || !productName) {
+                            console.warn('Skipping invalid product data:', p);
+                            return;
+                        }
+                        
+                        if (existingCodes.has(productCode)) {
+                            skippedCount++;
+                        } else {
+                            const newProduct = {
+                                id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+                                code: productCode,
+                                name: productName,
+                                category: p['Kategori'] || p.category || 'Lainnya',
+                                hpp: parseFloat(p['HPP'] || p.hpp || 0),
+                                price: parseFloat(p['Harga Jual'] || p.price || 0),
+                                currentStock: parseInt(p['Stok'] || p.currentStock || 0),
+                                unit: p['Satuan'] || p.unit || 'pcs',
+                                description: p['Deskripsi'] || p.description || '',
+                                createdAt: new Date().toISOString()
+                            };
+
+                            products.push(newProduct);
+                            if (newProduct.currentStock > 0) {
+                                stockMovements.push({
+                                    id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+                                    productId: newProduct.id,
+                                    type: 'in',
+                                    quantity: newProduct.currentStock,
+                                    date: new Date().toISOString(),
+                                    note: 'Stok awal dari import'
+                                });
+                            }
+                            importedCount++;
+                            existingCodes.add(newProduct.code);
+                        }
+                    });
+
+                    saveData();
+                    initializeApp();
+                    alert(`Import berhasil!\n\nProduk baru ditambahkan: ${importedCount}\nProduk duplikat dilewati: ${skippedCount}`);
+                    
+                } catch (error: any) {
+                    alert('Error saat import data: ' + error.message);
+                } finally {
+                    fileInput.value = ''; // Reset file input
+                }
+            };
+            reader.readAsText(file);
         }
 
-
         function parseCSV(csvText: string) {
-            const lines = csvText.split('\\n');
+            const lines = csvText.replace(/\r/g, '').split('\n').filter(line => line.trim() !== '');
             if (lines.length < 2) {
-                throw new Error('File CSV tidak valid atau kosong');
+                throw new Error('File CSV tidak valid atau kosong. Pastikan ada header dan setidaknya satu baris data.');
             }
-            const headers = lines[0].split(',');
+            
+            const headers = lines[0].split(',').map(h => h.trim());
             const data = [];
+
             for (let i = 1; i < lines.length; i++) {
-                const values = lines[i].split(',');
-                if (values.length === headers.length) {
-                    const item: any = {};
+                // Regex to handle quoted fields with commas
+                const values = lines[i].match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g) || [];
+                if (values.length > 0) {
+                    const item: { [key: string]: string } = {};
                     headers.forEach((header, index) => {
-                        item[header.trim()] = values[index].trim();
+                        if (index < values.length) {
+                            let value = values[index].trim();
+                            if (value.startsWith('"') && value.endsWith('"')) {
+                                // Unescape double quotes and remove outer quotes
+                                value = value.substring(1, value.length - 1).replace(/""/g, '"');
+                            }
+                            item[header] = value;
+                        } else {
+                            item[header] = ''; // Handle empty trailing columns
+                        }
                     });
                     data.push(item);
                 }
@@ -2092,20 +2333,21 @@ const App: React.FC = () => {
 
         // Sales Management Functions
         const renderSales = () => {
-            filteredSales = sales.slice(); // Copy all sales initially
-            updateSalesTable();
-            updateSalesSummary();
+            filterSales();
         }
 
         const updateSalesTable = () => {
             const tbody = (document.getElementById('sales-table') as HTMLElement);
+
+            const paginatedSales = paginate(filteredSales, currentPage.sales, ITEMS_PER_PAGE);
             
-            if (filteredSales.length === 0) {
+            if (paginatedSales.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="8" class="px-6 py-8 text-center text-gray-500">Belum ada transaksi penjualan. Klik "Transaksi Baru" untuk memulai.</td></tr>';
+                renderPagination('sales-pagination', currentPage.sales, filteredSales.length, ITEMS_PER_PAGE, changeSalesPage);
                 return;
             }
 
-            tbody.innerHTML = filteredSales.map(sale => {
+            tbody.innerHTML = paginatedSales.map(sale => {
                 const itemsCount = sale.items ? sale.items.length : 1;
                 const itemsText = sale.items ? `${itemsCount} item${itemsCount > 1 ? 's' : ''}` : 'Legacy';
                 const paymentMethod = sale.paymentMethod === 'cash' ? 'Cash' : (sale.paymentMethod === 'transfer' ? 'Transfer' : 'Belum Bayar');
@@ -2161,7 +2403,13 @@ const App: React.FC = () => {
                     </tr>
                 `;
             }).join('');
+             renderPagination('sales-pagination', currentPage.sales, filteredSales.length, ITEMS_PER_PAGE, changeSalesPage);
         }
+
+        const changeSalesPage = (page: number) => {
+            currentPage.sales = page;
+            updateSalesTable();
+        };
 
         const updateSalesSummary = () => {
             const totalCount = filteredSales.length;
@@ -2184,8 +2432,9 @@ const App: React.FC = () => {
                 if (dateTo && saleDate > dateTo) return false;
                 
                 return true;
-            });
+            }).sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
+            currentPage.sales = 1;
             updateSalesTable();
             updateSalesSummary();
         }
@@ -2206,7 +2455,7 @@ const App: React.FC = () => {
             // Reset modal to create mode
             (document.getElementById('sale-modal-title') as HTMLElement).textContent = 'Transaksi Penjualan';
             (document.getElementById('sale-item-controls') as HTMLElement).style.display = 'block';
-            (document.querySelector('#sale-items-header button') as HTMLElement).style.display = 'block';
+            ((document.querySelector('#sale-items-header button') as HTMLElement)!).style.display = 'block';
             const paymentMethodSelect = (document.getElementById('payment-method') as HTMLSelectElement);
             (paymentMethodSelect.querySelector('option[value="unpaid"]') as HTMLOptionElement).hidden = false;
             paymentMethodSelect.value = 'cash';
@@ -2238,7 +2487,7 @@ const App: React.FC = () => {
             // Configure modal for payment
             (document.getElementById('sale-modal-title') as HTMLElement).textContent = 'Proses Pembayaran';
             (document.getElementById('sale-item-controls') as HTMLElement).style.display = 'none';
-            (document.querySelector('#sale-items-header button') as HTMLElement).style.display = 'none';
+            ((document.querySelector('#sale-items-header button') as HTMLElement)!).style.display = 'none';
             
             const paymentMethodSelect = (document.getElementById('payment-method') as HTMLSelectElement);
             (paymentMethodSelect.querySelector('option[value="unpaid"]') as HTMLOptionElement).hidden = true;
@@ -2288,7 +2537,6 @@ const App: React.FC = () => {
                 return;
             }
 
-            const product = products.find((p: any) => p.id === productId);
         }
 
         const searchSaleProducts = () => {
@@ -2570,16 +2818,18 @@ const App: React.FC = () => {
         }
 
         const showReceipt = (sale: any) => {
-            const content = (document.getElementById('receipt-content') as HTMLElement);
-            const receiptDate = formatDate(sale.saleDate || sale.createdAt);
-            
+            const content = document.getElementById('receipt-content') as HTMLElement;
+            const receiptDate = new Date(sale.saleDate || sale.createdAt).toLocaleString('id-ID', {
+                day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
+            });
+
             let itemsHtml = sale.items.map((item: any) => `
-                <div class="flex justify-between mb-1">
-                    <div class="flex-1">
-                        <div class="font-medium">${item.productName}</div>
-                        <div class="text-xs text-gray-600">${item.quantity} ${item.unit} x ${formatCurrency(item.unitPrice)}</div>
+                <div class="item">
+                    <div class="item-name">${item.productName}</div>
+                    <div class="item-details">
+                        <span>${item.quantity} ${item.unit} x ${item.unitPrice.toLocaleString('id-ID')}</span>
+                        <span>${item.totalPrice.toLocaleString('id-ID')}</span>
                     </div>
-                    <div class="font-medium">${formatCurrency(item.totalPrice)}</div>
                 </div>
             `).join('');
 
@@ -2592,26 +2842,44 @@ const App: React.FC = () => {
                 statusText = 'BELUM TERBAYAR';
                 statusColor = 'text-yellow-600';
             }
-            
+
             content.innerHTML = `
-                <div class="text-center border-b pb-4 mb-4">
-                    <div class="font-bold text-lg">${settings.storeName}</div>
-                    <div class="text-sm">${settings.storeAddress}</div>
-                    <div class="text-sm">Tel: ${settings.storePhone}</div>
-                    <div class="text-sm">${settings.storeEmail}</div>
-                </div>
-                <div class="border-b pb-2 mb-4">
-                    <div class="flex justify-between"><span>No. Transaksi:</span><span>${sale.transactionNumber}</span></div>
-                    <div class="flex justify-between"><span>Tanggal:</span><span>${receiptDate}</span></div>
-                    <div class="flex justify-between"><span>Customer:</span><span>${sale.customerName}</span></div>
-                    <div class="flex justify-between"><span>Pembayaran:</span><span>${sale.paymentMethod === 'cash' ? 'Cash' : (sale.paymentMethod === 'transfer' ? 'Transfer' : 'Belum Bayar')}</span></div>
-                    <div class="flex justify-between"><span>Status:</span><span class="font-bold ${statusColor}">${statusText}</span></div>
-                </div>
-                <div class="border-b pb-2 mb-4">${itemsHtml}</div>
-                <div class="border-b pb-2 mb-4"><div class="flex justify-between font-bold text-lg"><span>TOTAL:</span><span>${formatCurrency(sale.totalAmount)}</span></div></div>
-                <div class="text-center text-sm">
-                    <div>Terima kasih atas kunjungan Anda!</div>
-                    ${sale.status === 'indent' || sale.status === 'unpaid' ? `<div class="font-semibold ${statusColor}">Silakan selesaikan pembayaran</div>` : '<div>Barang yang sudah dibeli tidak dapat dikembalikan</div>'}
+                <style>
+                    #receipt-content { font-family: 'Courier New', monospace; font-size: 12px; line-height: 1.4; color: #000; }
+                    .receipt-header, .receipt-footer { text-align: center; }
+                    .receipt-header .store-name { font-size: 14px; font-weight: bold; }
+                    .line { border-top: 1px dashed #000; margin: 8px 0; content: ''; display: block; }
+                    .details-grid, .item-details, .total { display: flex; justify-content: space-between; }
+                    .item-name { text-transform: uppercase; }
+                    .item { margin-bottom: 4px; }
+                    .total { font-weight: bold; font-size: 14px; margin-top: 4px; }
+                    .status { text-align: right; font-weight: bold; margin-bottom: 4px; }
+                    /* These classes are for the modal view only and print */
+                    .text-green-600 { color: #059669 !important; }
+                    .text-orange-600 { color: #EA580C !important; }
+                    .text-yellow-600 { color: #D97706 !important; }
+                    .font-semibold { font-weight: 600; }
+                    .mt-2 { margin-top: 8px; }
+                </style>
+                <div class="receipt-body">
+                    <div class="receipt-header">
+                        <div class="store-name">${settings.storeName}</div>
+                        <div>${settings.storeAddress}</div>
+                        <div>Tel: ${settings.storePhone}</div>
+                    </div>
+                    <div class="line"></div>
+                    <div class="details-grid"><span>No:</span><span>${sale.transactionNumber}</span></div>
+                    <div class="details-grid"><span>Tanggal:</span><span>${receiptDate}</span></div>
+                    <div class="details-grid"><span>Customer:</span><span>${sale.customerName}</span></div>
+                    <div class="line"></div>
+                    ${itemsHtml}
+                    <div class="line"></div>
+                    <div class="status ${statusColor}">${statusText}</div>
+                    <div class="total"><span>TOTAL</span><span>${formatCurrency(sale.totalAmount)}</span></div>
+                    <div class="line"></div>
+                    <div class="receipt-footer">
+                        ${sale.status === 'indent' || sale.status === 'unpaid' ? `<div class="font-semibold ${statusColor}">Silakan selesaikan pembayaran</div>` : '<div>Terima kasih!</div>'}
+                    </div>
                 </div>
             `;
             showModal('receipt-modal');
@@ -2621,9 +2889,35 @@ const App: React.FC = () => {
             const receiptContent = (document.getElementById('receipt-content') as HTMLElement).innerHTML;
             const printWindow = window.open('', '_blank');
             if (printWindow) {
-                printWindow.document.write(`<html><head><title>Struk Penjualan</title><style>body { font-family: 'Courier New', monospace; font-size: 12px; } .flex { display: flex; } .justify-between { justify-content: space-between; } .font-bold { font-weight: bold; } .text-center { text-align: center; } .mb-1 { margin-bottom: 4px; } .border-b { border-bottom: 1px solid #000; } .pb-2 { padding-bottom: 8px; } .pb-4 { padding-bottom: 16px; } .mb-4 { margin-bottom: 16px; } .text-lg { font-size: 16px; } .text-sm { font-size: 11px; } .text-xs { font-size: 10px; } .flex-1 { flex: 1; }</style></head><body>${receiptContent}</body></html>`);
+                printWindow.document.write(`
+                    <html>
+                        <head>
+                            <title>Struk Penjualan</title>
+                            <style>
+                                @page {
+                                    size: 58mm auto;
+                                    margin: 3mm;
+                                }
+                                body {
+                                    width: 52mm; /* 58mm - 3mm margin on each side */
+                                    margin: 0;
+                                    padding: 0;
+                                    -webkit-print-color-adjust: exact; /* For Chrome */
+                                    color-adjust: exact; /* Standard */
+                                }
+                            </style>
+                        </head>
+                        <body>
+                            ${receiptContent}
+                        </body>
+                    </html>
+                `);
                 printWindow.document.close();
-                printWindow.print();
+                printWindow.focus();
+                setTimeout(() => { 
+                    printWindow.print();
+                    printWindow.close();
+                }, 250);
             }
         }
 
@@ -2745,36 +3039,93 @@ const App: React.FC = () => {
         }
 
         const exportSalesData = () => {
-            if (sales.length === 0) {
+             if (sales.length === 0) {
                 alert('Tidak ada data penjualan untuk diekspor!');
                 return;
             }
             const exportData: any[] = [];
-            exportData.push({ 'No Transaksi': '=== LAPORAN DATA PENJUALAN ===' });
+            exportData.push({ 'No Transaksi': '=== LAPORAN DETAIL PENJUALAN ===' });
 
             sales.forEach(sale => {
-                exportData.push({
-                    'No Transaksi': sale.transactionNumber,
-                    'Tanggal': formatDateForExport(sale.saleDate || sale.createdAt),
-                    'Customer': sale.customerName,
-                    'Metode Bayar': sale.paymentMethod,
-                    'Total': sale.totalAmount,
-                    'Status': sale.status,
-                    'Items': sale.items.map((i: any) => `${i.productName} (x${i.quantity})`).join(', ')
+                sale.items.forEach((item: any) => {
+                     exportData.push({
+                        'No Transaksi': sale.transactionNumber,
+                        'Tanggal': formatDateForExport(sale.saleDate || sale.createdAt),
+                        'Customer': sale.customerName,
+                        'Metode Bayar': sale.paymentMethod,
+                        'Status Transaksi': sale.status,
+                        'Kode Produk': item.productCode,
+                        'Nama Produk': item.productName,
+                        'Kategori': item.category,
+                        'Jumlah': item.quantity,
+                        'Satuan': item.unit,
+                        'Harga Satuan': item.unitPrice,
+                        'Total Harga': item.totalPrice,
+                    });
                 });
             });
 
-            createExcelFileXLS(exportData, `laporan-penjualan-${new Date().toISOString().split('T')[0]}.xls`, 'Laporan Penjualan');
-            alert('Laporan penjualan berhasil diekspor!');
+            createExcelFileXLS(exportData, `laporan-penjualan-detail-${new Date().toISOString().split('T')[0]}.xls`, 'Laporan Penjualan Detail');
+            alert('Laporan penjualan detail berhasil diekspor!');
         }
         
         const exportStockCard = () => {
-             alert('Fungsi Export Kartu Stok belum diimplementasikan dalam duplikasi ini.');
+             const productId = (document.getElementById('stock-card-product') as HTMLSelectElement).value;
+            if (!productId) {
+                alert('Pilih produk terlebih dahulu untuk mengekspor kartu stok.');
+                return;
+            }
+
+            const product = products.find((p: any) => p.id === productId);
+            if (!product) return;
+
+            const movements = stockMovements
+                .filter(m => m.productId === productId)
+                .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+            
+            if (movements.length === 0) {
+                alert('Tidak ada pergerakan stok untuk produk ini.');
+                return;
+            }
+
+            const dataToExport: any[] = [];
+            let runningBalance = 0;
+
+            movements.forEach(movement => {
+                if (movement.type === 'in') {
+                    runningBalance += movement.quantity;
+                } else {
+                    runningBalance -= movement.quantity;
+                }
+                const stockValue = runningBalance * product.hpp;
+                dataToExport.push({
+                    'Tanggal': formatDateForExport(movement.date),
+                    'Keterangan': movement.note,
+                    'Masuk': movement.type === 'in' ? movement.quantity : '',
+                    'Keluar': movement.type === 'out' ? movement.quantity : '',
+                    'Saldo': runningBalance,
+                    'Nilai Stok': stockValue
+                });
+            });
+
+            createExcelFileXLS(dataToExport, `kartu-stok-${product.code}-${new Date().toISOString().split('T')[0]}.xls`, `Kartu Stok ${product.code}`);
+            alert('Kartu stok berhasil diekspor!');
         }
 
         const downloadTemplate = () => {
-            const csvTemplate = 'Kode Produk,Nama Produk,Kategori,HPP,Harga Jual,Stok,Satuan,Deskripsi\\nELK001,"Smartphone",Elektronik,2500000,3200000,25,unit,"RAM 6GB"\\nMKN001,"Beras 5kg",Makanan,45000,58000,100,karung,"Beras premium"';
-            const blob = new Blob(['\\uFEFF' + csvTemplate], { type: 'text/csv;charset=utf-8' });
+            const headers = ['Kode Produk', 'Nama Produk', 'Kategori', 'HPP', 'Harga Jual', 'Stok', 'Satuan', 'Deskripsi'];
+            const examples = [
+                ['MNM001', 'Kopi Instan Sachet', 'Minuman', '1200', '1500', '100', 'pcs', 'Kopi instan rasa original.'],
+                ['MKN001', 'Mie Instan Goreng', 'Makanan', '2500', '3000', '250', 'pcs', 'Mie instan populer rasa goreng spesial.'],
+                ['ATK001', 'Buku Tulis Sidu 58', 'Alat Tulis', '3500', '5000', '50', 'pcs', '"Buku tulis ukuran standar, 58 lembar."']
+            ];
+            
+            const csvContent = [
+                headers.join(','),
+                ...examples.map(row => row.map(field => `"${String(field).replace(/"/g, '""')}"`).join(','))
+            ].join('\n');
+            
+            const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement('a');
             const url = URL.createObjectURL(blob);
             link.setAttribute('href', url);
@@ -2832,6 +3183,53 @@ const App: React.FC = () => {
             reader.readAsText(file);
         }
 
+        // Pagination Functions
+        const paginate = (items: any[], page: number, perPage: number) => {
+            const start = (page - 1) * perPage;
+            const end = start + perPage;
+            return items.slice(start, end);
+        }
+
+        const renderPagination = (containerId: string, currentPage: number, totalItems: number, itemsPerPage: number, onPageChange: (page: number) => void) => {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+
+            const totalPages = Math.ceil(totalItems / itemsPerPage);
+            if (totalPages <= 1) {
+                container.innerHTML = '';
+                return;
+            }
+            
+            const startItem = (currentPage - 1) * itemsPerPage + 1;
+            const endItem = Math.min(startItem + itemsPerPage - 1, totalItems);
+
+            const prevDisabled = currentPage === 1;
+            const nextDisabled = currentPage === totalPages;
+
+            container.innerHTML = `
+                <div class="text-sm text-gray-700">
+                    Menampilkan <span class="font-medium">${startItem}</span> sampai <span class="font-medium">${endItem}</span> dari <span class="font-medium">${totalItems}</span> hasil
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button class="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium ${prevDisabled ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white text-gray-700 hover:bg-gray-50'}" 
+                            onclick="${prevDisabled ? '' : `window.onPageChange['${containerId}'](${currentPage - 1})`}" ${prevDisabled ? 'disabled' : ''}>
+                        Sebelumnya
+                    </button>
+                    <span class="text-sm text-gray-700">Halaman ${currentPage} dari ${totalPages}</span>
+                    <button class="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium ${nextDisabled ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white text-gray-700 hover:bg-gray-50'}"
+                            onclick="${nextDisabled ? '' : `window.onPageChange['${containerId}'](${currentPage + 1})`}" ${nextDisabled ? 'disabled' : ''}>
+                        Selanjutnya
+                    </button>
+                </div>
+            `;
+             // Expose page change handlers to window object
+            if (!window.onPageChange) {
+                window.onPageChange = {};
+            }
+            window.onPageChange[containerId] = onPageChange;
+        }
+
+
         // Assign functions to window object
         const win = window as any;
         win.showSection = showSection;
@@ -2872,17 +3270,12 @@ const App: React.FC = () => {
         win.deleteSale = deleteSale;
         win.deleteCategory = deleteCategory;
         win.showPaymentModal = showPaymentModal;
-        
-        // Close modals when clicking outside
-        win.onclick = function(event: MouseEvent) {
-            const modals = ['product-modal', 'stock-in-modal', 'stock-out-modal', 'create-order-modal', 'order-detail-modal', 'create-sale-modal', 'sale-detail-modal', 'receipt-modal'];
-            modals.forEach(modalId => {
-                const modal = document.getElementById(modalId);
-                if (event.target === modal) {
-                    closeModal(modalId);
-                }
-            });
-        }
+        win.applyDashboardFilter = applyDashboardFilter;
+        win.resetDashboardFilter = resetDashboardFilter;
+        win.changeProductsPage = changeProductsPage;
+        win.changeOrdersPage = changeOrdersPage;
+        win.changeSalesPage = changeSalesPage;
+        win.changeStockCardPage = changeStockCardPage;
         
         // Initial load
         initializeApp();
@@ -2896,3 +3289,9 @@ const App: React.FC = () => {
 };
 
 export default App;
+
+declare global {
+    interface Window {
+        onPageChange: { [key: string]: (page: number) => void };
+    }
+}
