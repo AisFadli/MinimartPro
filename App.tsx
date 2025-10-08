@@ -3061,31 +3061,47 @@ const App: React.FC = () => {
         }
 
         const exportSalesData = () => {
-             if (sales.length === 0) {
+            if (sales.length === 0) {
                 alert('Tidak ada data penjualan untuk diekspor!');
                 return;
             }
             const exportData: any[] = [];
-            exportData.push({ 'No Transaksi': '=== LAPORAN DETAIL PENJUALAN ===' });
 
             sales.forEach(sale => {
-                sale.items.forEach((item: any) => {
-                     exportData.push({
-                        'No Transaksi': sale.transactionNumber,
-                        'Tanggal': formatDateForExport(sale.saleDate || sale.createdAt),
-                        'Customer': sale.customerName,
-                        'Metode Bayar': sale.paymentMethod,
-                        'Status Transaksi': sale.status,
-                        'Kode Produk': item.productCode,
-                        'Nama Produk': item.productName,
-                        'Kategori': item.category,
-                        'Jumlah': item.quantity,
-                        'Satuan': item.unit,
-                        'Harga Satuan': item.unitPrice,
-                        'Total Harga': item.totalPrice,
+                if (sale.items && sale.items.length > 0) {
+                    sale.items.forEach((item: any) => {
+                        exportData.push({
+                            'No Transaksi': sale.transactionNumber,
+                            'Tanggal': formatDateForExport(sale.saleDate || sale.createdAt),
+                            'Customer': sale.customerName,
+                            'Metode Bayar': sale.paymentMethod,
+                            'Status Transaksi': sale.status,
+                            'Kode Produk': item.productCode,
+                            'Nama Produk': item.productName,
+                            'Kategori': item.category,
+                            'Jumlah': item.quantity,
+                            'Satuan': item.unit,
+                            'Harga Satuan': item.unitPrice,
+                            'Total Harga': item.totalPrice,
+                        });
                     });
-                });
+                }
             });
+
+            if (exportData.length === 0) {
+                alert('Tidak ada item penjualan yang ditemukan untuk diekspor!');
+                return;
+            }
+
+            // Create a title row that uses the first column.
+            const headers = Object.keys(exportData[0]);
+            const titleRow: { [key: string]: string } = {};
+            headers.forEach((header, index) => {
+                titleRow[header] = index === 0 ? '=== LAPORAN DETAIL PENJUALAN ===' : '';
+            });
+
+            // Add the title row to the top of the data.
+            exportData.unshift(titleRow);
 
             createExcelFileXLS(exportData, `laporan-penjualan-detail-${new Date().toISOString().split('T')[0]}.xls`, 'Laporan Penjualan Detail');
             alert('Laporan penjualan detail berhasil diekspor!');
