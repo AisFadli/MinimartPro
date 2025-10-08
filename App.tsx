@@ -1732,6 +1732,18 @@ const App: React.FC = () => {
             const modal = (document.getElementById(modalId) as HTMLElement);
             modal.classList.add('hidden');
             modal.classList.remove('flex');
+            
+            // Specifically reset the sale modal when it's closed to prevent state leaks
+            if (modalId === 'create-sale-modal') {
+                editingSaleId = null; // Ensure edit mode is off
+                (document.getElementById('sale-modal-title') as HTMLElement).textContent = 'Transaksi Penjualan';
+                (document.getElementById('sale-customer') as HTMLInputElement).readOnly = false;
+                (document.getElementById('sale-item-controls') as HTMLElement).style.display = 'block';
+                (document.querySelector('#sale-items-header button') as HTMLElement).style.display = 'block';
+                updateProcessButton(); // This will reset the button text/color to default
+                (document.getElementById('product-search-results') as HTMLElement).classList.add('hidden');
+                (document.getElementById('sale-product-search') as HTMLInputElement).value = '';
+            }
         }
 
         const formatCurrency = (amount: number) => {
@@ -2404,6 +2416,9 @@ const App: React.FC = () => {
                                 <button onclick="viewSale('${sale.id}')" class="text-blue-600 hover:text-blue-900" title="Lihat Detail">
                                     <i class="fas fa-eye"></i>
                                 </button>
+                                <button onclick="editSale('${sale.id}')" class="text-yellow-600 hover:text-yellow-900" title="Edit Transaksi" ${sale.status === 'indent' ? 'disabled' : ''}>
+                                    <i class="fas fa-edit"></i>
+                                </button>
                                 <button onclick="printSaleReceipt('${sale.id}')" class="text-green-600 hover:text-green-900" title="Cetak Ulang Struk">
                                     <i class="fas fa-print"></i>
                                 </button>
@@ -2519,6 +2534,41 @@ const App: React.FC = () => {
             processBtn.innerHTML = '<i class="fas fa-check-circle mr-2"></i>Konfirmasi Pembayaran';
             processBtn.className = 'flex-1 bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg transition-colors font-medium';
 
+            updateSaleItemsTable();
+            showModal('create-sale-modal');
+        }
+
+        const editSale = (saleId: string) => {
+            const sale = sales.find((s: any) => s.id === saleId);
+            if (!sale) {
+                alert('Transaksi tidak ditemukan!');
+                return;
+            }
+
+            editingSaleId = saleId;
+            currentSaleItems = [...sale.items];
+
+            // Populate form
+            (document.getElementById('sale-customer') as HTMLInputElement).value = sale.customerName;
+            (document.getElementById('sale-date') as HTMLInputElement).value = new Date(sale.saleDate).toISOString().slice(0, 16);
+            (document.getElementById('payment-method') as HTMLSelectElement).value = sale.paymentMethod;
+
+            // Configure modal for edit mode
+            (document.getElementById('sale-modal-title') as HTMLElement).textContent = `Edit Transaksi ${sale.transactionNumber}`;
+            (document.getElementById('sale-customer') as HTMLInputElement).readOnly = true;
+            (document.getElementById('sale-item-controls') as HTMLElement).style.display = 'none';
+            (document.querySelector('#sale-items-header button') as HTMLElement).style.display = 'none';
+
+            // Change process button
+            const processBtn = (document.getElementById('process-sale-btn') as HTMLButtonElement);
+            processBtn.innerHTML = '<i class="fas fa-save mr-2"></i>Update Transaksi';
+            processBtn.className = 'flex-1 bg-yellow-600 hover:bg-yellow-700 text-white py-3 rounded-lg transition-colors font-medium';
+            
+            // Unhide 'unpaid' option if it was hidden by payment modal
+            const paymentMethodSelect = (document.getElementById('payment-method') as HTMLSelectElement);
+            (paymentMethodSelect.querySelector('option[value="unpaid"]') as HTMLOptionElement).hidden = false;
+
+            // Update items table (which will show disabled remove buttons)
             updateSaleItemsTable();
             showModal('create-sale-modal');
         }
@@ -2680,13 +2730,14 @@ const App: React.FC = () => {
 
         const updateSaleItemsTable = () => {
             const tbody = (document.getElementById('sale-items-table') as HTMLElement);
-            const isPaymentMode = !!editingSaleId;
+            const isEditMode = !!editingSaleId;
             
             if (currentSaleItems.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="5" class="px-3 py-8 text-center text-gray-500 text-sm">Belum ada produk ditambahkan</td></tr>';
                 (document.getElementById('sale-subtotal') as HTMLElement).textContent = 'Rp 0';
                 (document.getElementById('sale-grand-total') as HTMLElement).textContent = 'Rp 0';
-                if (!isPaymentMode) currentSaleType = 'normal';
+                if (!isEditMode) currentSaleType = 'normal';
+                updateProcessButton(); // Update button even if empty
                 return;
             }
 
@@ -2703,7 +2754,7 @@ const App: React.FC = () => {
                         <td class="px-3 py-2 text-sm">${formatCurrency(item.unitPrice)}</td>
                         <td class="px-3 py-2 text-sm font-medium">${formatCurrency(item.totalPrice)}</td>
                         <td class="px-3 py-2 text-sm">
-                            <button onclick="removeItemFromSale(${index})" class="text-red-600 hover:text-red-900" ${isPaymentMode ? 'disabled style="cursor:not-allowed; opacity:0.5;"' : ''}>
+                            <button onclick="removeItemFromSale(${index})" class="text-red-600 hover:text-red-900" ${isEditMode ? 'disabled style="cursor:not-allowed; opacity:0.5;"' : ''}>
                                 <i class="fas fa-trash"></i>
                             </button>
                         </td>
@@ -2718,7 +2769,7 @@ const App: React.FC = () => {
         }
 
         const updateProcessButton = () => {
-            if (editingSaleId) return;
+            if (editingSaleId) return; // Button style is set by editSale/showPaymentModal
             const processBtn = document.querySelector('#process-sale-btn') as HTMLButtonElement;
             if (currentSaleType === 'indent') {
                 processBtn.innerHTML = '<i class="fas fa-clipboard-list mr-2"></i>Proses Indent';
@@ -2738,31 +2789,44 @@ const App: React.FC = () => {
         }
 
         const processSale = () => {
-            // UPDATE LOGIC
+            // UPDATE LOGIC (covers both editing and paying off debt)
             if (editingSaleId) {
-                const sale = sales.find((s: any) => s.id === editingSaleId);
-                if (!sale) {
+                const saleIndex = sales.findIndex((s: any) => s.id === editingSaleId);
+                if (saleIndex === -1) {
                     alert('Error: Transaksi tidak ditemukan untuk diperbarui.');
+                    closeModal('create-sale-modal');
+                    editingSaleId = null;
                     return;
                 }
+
+                const sale = sales[saleIndex];
+                const originalStatus = sale.status;
 
                 const saleDate = (document.getElementById('sale-date') as HTMLInputElement).value;
                 const paymentMethod = (document.getElementById('payment-method') as HTMLSelectElement).value;
-
-                if (paymentMethod === 'unpaid') {
-                    alert('Pilih metode pembayaran yang valid (Cash atau Transfer).');
-                    return;
+                
+                // Update the sale object
+                sale.saleDate = saleDate ? new Date(saleDate).toISOString() : new Date().toISOString();
+                sale.paymentMethod = paymentMethod;
+                
+                // Only update status if it's not an indent sale
+                if (originalStatus !== 'indent') {
+                    sale.status = (paymentMethod === 'unpaid') ? 'unpaid' : 'completed';
                 }
                 
-                sale.status = 'completed';
-                sale.paymentMethod = paymentMethod;
-                sale.paymentDate = saleDate ? new Date(saleDate).toISOString() : new Date().toISOString();
-                sale.confirmedBy = currentUser.name;
-                
+                // Add audit info
+                sale.updatedAt = new Date().toISOString();
+                sale.updatedBy = currentUser.name;
+
+                // If it was a payment for a previously unpaid sale, set paymentDate
+                if (originalStatus === 'unpaid' && sale.status === 'completed') {
+                    sale.paymentDate = sale.updatedAt;
+                }
+
                 saveData();
                 closeModal('create-sale-modal');
                 renderSales();
-                alert(`Pembayaran untuk transaksi ${sale.transactionNumber} berhasil dikonfirmasi.`);
+                alert(`Transaksi ${sale.transactionNumber} berhasil diperbarui.`);
                 editingSaleId = null; // Reset
                 return;
             }
@@ -3308,6 +3372,7 @@ const App: React.FC = () => {
         win.deleteSale = deleteSale;
         win.deleteCategory = deleteCategory;
         win.showPaymentModal = showPaymentModal;
+        win.editSale = editSale;
         win.applyDashboardFilter = applyDashboardFilter;
         win.resetDashboardFilter = resetDashboardFilter;
         win.changeProductsPage = changeProductsPage;
