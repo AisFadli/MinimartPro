@@ -239,10 +239,26 @@ const App: React.FC = () => {
                     <h2 class="text-3xl font-bold text-gray-800 mb-2">Manajemen Order</h2>
                     <p class="text-gray-600">Kelola permintaan stok dan approval</p>
                 </div>
-                <div class="mt-4 md:mt-0">
+                <div class="flex flex-col sm:flex-row gap-3 mt-4 md:mt-0">
                     <button onclick="showCreateOrderModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors">
                         <i class="fas fa-plus mr-2"></i>Buat Order
                     </button>
+                    <button onclick="exportOrdersData()" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition-colors">
+                        <i class="fas fa-download mr-2"></i>Export Order
+                    </button>
+                </div>
+            </div>
+
+            <!-- Order Filters -->
+            <div class="bg-white rounded-xl card-shadow p-6 mb-6">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <input type="text" id="order-search" placeholder="Cari No. Order / Nama Produk..." class="md:col-span-1 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    <input type="date" id="order-date-from" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    <input type="date" id="order-date-to" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    <div class="flex items-center gap-2">
+                        <button onclick="filterAndRenderOrders()" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"><i class="fas fa-filter mr-2"></i>Filter</button>
+                        <button onclick="resetOrderFilters()" class="w-full bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded-lg transition-colors"><i class="fas fa-sync-alt mr-2"></i>Reset</button>
+                    </div>
                 </div>
             </div>
 
@@ -250,18 +266,11 @@ const App: React.FC = () => {
             <div class="bg-white rounded-xl card-shadow mb-6">
                 <div class="border-b border-gray-200">
                     <nav class="flex space-x-8 px-6">
-                        <button onclick="filterOrders('all', event)" class="order-tab-btn py-4 px-1 border-b-2 border-blue-500 text-blue-600 font-medium">
-                            Semua Order
-                        </button>
-                        <button onclick="filterOrders('pending', event)" class="order-tab-btn py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700">
-                            Menunggu Approval
-                        </button>
-                        <button onclick="filterOrders('approved', event)" class="order-tab-btn py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700">
-                            Disetujui
-                        </button>
-                        <button onclick="filterOrders('rejected', event)" class="order-tab-btn py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700">
-                            Ditolak
-                        </button>
+                        <button onclick="filterOrdersByStatus('all', event)" class="order-tab-btn py-4 px-1 border-b-2 border-blue-500 text-blue-600 font-medium">Semua</button>
+                        <button onclick="filterOrdersByStatus('pending', event)" class="order-tab-btn py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700">Menunggu</button>
+                        <button onclick="filterOrdersByStatus('approved', event)" class="order-tab-btn py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700">Disetujui</button>
+                        <button onclick="filterOrdersByStatus('completed', event)" class="order-tab-btn py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700">Selesai</button>
+                        <button onclick="filterOrdersByStatus('rejected', event)" class="order-tab-btn py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700">Ditolak</button>
                     </nav>
                 </div>
             </div>
@@ -274,8 +283,8 @@ const App: React.FC = () => {
                             <tr>
                                 <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No. Order</th>
                                 <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tanggal</th>
-                                <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produk</th>
-                                <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Jumlah</th>
+                                <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Items</th>
+                                <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Nilai</th>
                                 <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                                 <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
                             </tr>
@@ -775,52 +784,89 @@ const App: React.FC = () => {
         </div>
     </div>
 
-    <!-- Create Order Modal -->
-    <div id="create-order-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4">
-        <div class="bg-white rounded-xl max-w-md w-full">
+    <!-- Create/Edit/Approve Order Modal -->
+    <div id="order-form-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-xl max-w-4xl w-full max-h-screen overflow-y-auto">
             <div class="p-6">
                 <div class="flex justify-between items-center mb-6">
-                    <h3 class="text-2xl font-bold text-gray-800">Buat Order Stok</h3>
-                    <button onclick="closeModal('create-order-modal')" class="text-gray-500 hover:text-gray-700">
-                        <i class="fas fa-times text-xl"></i>
-                    </button>
+                    <h3 id="order-modal-title" class="text-2xl font-bold text-gray-800">Buat Order Stok</h3>
+                    <button onclick="closeModal('order-form-modal')" class="text-gray-500 hover:text-gray-700"><i class="fas fa-times text-xl"></i></button>
                 </div>
-                <form id="create-order-form" class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Cari Produk</label>
-                         <input type="text" id="order-product-search" placeholder="Ketik nama atau kode produk..."
-                                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 mb-2">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Left: Product Selection -->
+                    <div class="space-y-4">
+                        <div class="border-b pb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Tanggal Order</label>
+                            <input type="datetime-local" id="order-date" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div id="order-item-controls">
+                             <h4 class="font-medium text-gray-700 mb-3">Tambah Produk</h4>
+                             <div class="space-y-3">
+                                 <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Cari & Pilih Produk</label>
+                                    <div class="relative">
+                                        <input type="text" id="order-product-search" placeholder="Ketik nama atau kode produk..."
+                                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                        <div id="order-product-search-results" class="hidden absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                                            <!-- Search results will appear here -->
+                                        </div>
+                                    </div>
+                                    <input type="hidden" id="selected-order-product-id">
+                                 </div>
+                                 <div id="order-product-info" class="hidden bg-gray-50 p-3 rounded-lg text-sm text-gray-600">
+                                     <div class="flex justify-between"><span>Stok saat ini:</span><span id="order-available-stock" class="font-medium">0</span></div>
+                                     <div class="flex justify-between"><span>HPP:</span><span id="order-product-hpp" class="font-medium">Rp 0</span></div>
+                                 </div>
+                                 <div>
+                                     <label class="block text-sm font-medium text-gray-700 mb-2">Jumlah Order</label>
+                                     <input type="number" id="order-item-quantity" min="1" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                 </div>
+                                 <button type="button" onclick="addItemToOrder()" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg transition-colors"><i class="fas fa-plus mr-2"></i>Tambah ke Order</button>
+                             </div>
+                        </div>
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Produk</label>
-                        <select id="order-product" required 
-                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-                            <option value="">Pilih produk</option>
-                        </select>
+                    <!-- Right: Items List -->
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center">
+                            <h4 class="font-medium text-gray-700">Daftar Produk Order</h4>
+                            <button onclick="clearOrderItems()" class="text-red-600 hover:text-red-800 text-sm"><i class="fas fa-trash mr-1"></i>Hapus Semua</button>
+                        </div>
+                        <div class="border rounded-lg overflow-hidden min-h-[200px]">
+                            <table class="w-full text-sm">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-3 py-2 text-left">Produk</th>
+                                        <th class="px-3 py-2 text-left">Qty</th>
+                                        <th class="px-3 py-2 text-left">HPP</th>
+                                        <th class="px-3 py-2 text-left">Total</th>
+                                        <th class="px-3 py-2 text-left">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="order-items-table"></tbody>
+                            </table>
+                        </div>
+                        <div class="bg-blue-50 p-4 rounded-lg">
+                            <div class="flex justify-between text-lg font-bold text-blue-600">
+                                <span>Total Nilai Order:</span>
+                                <span id="order-grand-total">Rp 0</span>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Keterangan</label>
+                            <textarea id="order-note" rows="2" placeholder="Catatan untuk order ini..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"></textarea>
+                        </div>
+                        <div class="flex gap-3 pt-2">
+                            <button id="process-order-btn" onclick="handleOrderSubmit()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-medium transition-colors">
+                                Kirim Order
+                            </button>
+                            <button onclick="closeModal('order-form-modal')" class="px-6 bg-gray-300 hover:bg-gray-400 text-gray-700 py-3 rounded-lg transition-colors">Batal</button>
+                        </div>
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Jumlah Order</label>
-                        <input type="number" id="order-quantity" required min="1"
-                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Keterangan</label>
-                        <textarea id="order-note" rows="3" placeholder="Alasan order, supplier, dll"
-                                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"></textarea>
-                    </div>
-                    <div class="flex gap-3 pt-4">
-                        <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg transition-colors">
-                            <i class="fas fa-paper-plane mr-2"></i>Kirim Order
-                        </button>
-                        <button type="button" onclick="closeModal('create-order-modal')" 
-                                class="px-6 bg-gray-300 hover:bg-gray-400 text-gray-700 py-2 rounded-lg transition-colors">
-                            Batal
-                        </button>
-                    </div>
-                </form>
+                </div>
             </div>
         </div>
     </div>
+
 
     <!-- Create Sale Modal -->
     <div id="create-sale-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4">
@@ -1013,7 +1059,7 @@ const App: React.FC = () => {
 
     <!-- Order Detail Modal -->
     <div id="order-detail-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4">
-        <div class="bg-white rounded-xl max-w-lg w-full">
+        <div class="bg-white rounded-xl max-w-2xl w-full max-h-screen overflow-y-auto">
             <div class="p-6">
                 <div class="flex justify-between items-center mb-6">
                     <h3 class="text-2xl font-bold text-gray-800">Detail Order</h3>
@@ -1024,10 +1070,47 @@ const App: React.FC = () => {
                 <div id="order-detail-content" class="space-y-4">
                     <!-- Order details will be populated here -->
                 </div>
-                <div id="order-actions" class="flex gap-3 pt-6">
-                    <!-- Action buttons will be populated here -->
+                <div id="order-detail-printable"></div>
+                <div class="flex gap-3 pt-6">
+                     <button onclick="printOrder()" 
+                            class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg transition-colors">
+                        <i class="fas fa-print mr-2"></i>Print Order
+                    </button>
+                    <button onclick="closeModal('order-detail-modal')" 
+                            class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 py-2 rounded-lg transition-colors">
+                        Tutup
+                    </button>
                 </div>
             </div>
+        </div>
+    </div>
+    
+    <!-- Confirm Order Receipt Modal -->
+    <div id="order-receipt-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-xl max-w-2xl w-full max-h-screen overflow-y-auto">
+            <form id="order-receipt-form">
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-2xl font-bold text-gray-800">Konfirmasi Penerimaan Barang</h3>
+                        <button type="button" onclick="closeModal('order-receipt-modal')" class="text-gray-500 hover:text-gray-700"><i class="fas fa-times text-xl"></i></button>
+                    </div>
+                    <div class="space-y-4">
+                         <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Tanggal Penerimaan</label>
+                            <input type="date" id="receipt-date" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div id="receipt-items-list" class="space-y-3">
+                            <!-- Items to be confirmed will be populated here -->
+                        </div>
+                    </div>
+                    <div class="flex gap-3 pt-6">
+                        <button type="submit" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg transition-colors">
+                            <i class="fas fa-check-circle mr-2"></i>Konfirmasi & Tambah Stok
+                        </button>
+                        <button type="button" onclick="closeModal('order-receipt-modal')" class="px-6 bg-gray-300 hover:bg-gray-400 text-gray-700 py-2 rounded-lg transition-colors">Batal</button>
+                    </div>
+                </div>
+            </form>
         </div>
     </div>
     `;
@@ -1064,7 +1147,10 @@ const App: React.FC = () => {
         let settings = safeJSONParse('settings', {"minStockLimit":10,"currency":"IDR", "storeName": "Minimart An Nahl", "storeAddress": "Jl. Pramuka No. 1, Jakarta", "storePhone": "021-12345678", "storeEmail": "info@minimart.com"});
         
         let editingProductId: string | null = null;
-        let currentOrderFilter = 'all';
+        let editingOrderId: string | null = null;
+        let orderAction: 'create' | 'approve' = 'create';
+        let currentOrderItems: any[] = [];
+        let currentOrderFilter = { status: 'all', search: '', from: '', to: '' };
         let filteredSales: any[] = [];
         let editingSaleId: string | null = null;
         let currentSaleItems: any[] = []; // For the sale modal
@@ -1290,7 +1376,7 @@ const App: React.FC = () => {
              updateDashboard();
              renderProducts();
              renderCategories();
-             renderOrders();
+             filterAndRenderOrders(); // Use new filter function for orders
              filterSales(); // Use filterSales to render and update summary
              populateProductSelects();
              loadSettings();
@@ -1345,7 +1431,7 @@ const App: React.FC = () => {
                 .subscribe();
 
             supabase.channel('public:orders')
-                .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, (payload) => handleTableChange(payload, 'orders', orders, renderOrders))
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, (payload) => handleTableChange(payload, 'orders', orders, filterAndRenderOrders))
                 .subscribe();
 
             supabase.channel('public:sales')
@@ -1367,14 +1453,100 @@ const App: React.FC = () => {
             (document.getElementById('sale-product') as HTMLSelectElement).addEventListener('change', updateSaleInfo);
             (document.getElementById('sale-quantity') as HTMLInputElement).addEventListener('input', updateSaleTotal);
             (document.getElementById('sale-product-search') as HTMLInputElement).addEventListener('input', searchSaleProducts);
-            (document.getElementById('order-product-search') as HTMLInputElement).addEventListener('input', handleOrderProductSearch);
+            (document.getElementById('order-product-search') as HTMLInputElement).addEventListener('input', searchOrderProducts);
             (document.getElementById('sale-customer') as HTMLInputElement).addEventListener('input', updateProcessButton);
 
             // Form submissions
             (document.getElementById('product-form') as HTMLFormElement).addEventListener('submit', handleProductSubmit);
             (document.getElementById('stock-in-form') as HTMLFormElement).addEventListener('submit', handleStockIn);
             (document.getElementById('stock-out-form') as HTMLFormElement).addEventListener('submit', handleStockOut);
-            (document.getElementById('create-order-form') as HTMLFormElement).addEventListener('submit', handleCreateOrder);
+            
+            const handleConfirmReceipt = async (e: Event) => {
+                e.preventDefault();
+                if (!editingOrderId) return;
+                
+                const orderIndex = orders.findIndex((o: any) => o.id === editingOrderId);
+                if (orderIndex === -1) {
+                    alert('Order tidak ditemukan!');
+                    return;
+                }
+                
+                const receiptDate = (document.getElementById('receipt-date') as HTMLInputElement).value;
+                const order = orders[orderIndex];
+                const updatedItems = [...order.items];
+                
+                const stockUpdates: {productId: string, newStock: number}[] = [];
+                const movementsToAdd: any[] = [];
+                let allReceived = true;
+    
+                for (let i = 0; i < updatedItems.length; i++) {
+                    const item = updatedItems[i];
+                    const receivedInput = document.getElementById(`receipt-qty-${i}`) as HTMLInputElement;
+                    const receivedQty = parseInt(receivedInput.value, 10);
+                    
+                    if (isNaN(receivedQty) || receivedQty < 0) {
+                        alert(`Jumlah diterima untuk ${item.product_name} tidak valid.`);
+                        return;
+                    }
+    
+                    item.quantity_received = receivedQty;
+                    if (item.quantity_received < item.quantity_ordered) {
+                        allReceived = false;
+                    }
+                    
+                    if (receivedQty > 0) {
+                        const product = products.find((p: any) => p.id === item.product_id);
+                        if (product) {
+                            const newStock = product.current_stock + receivedQty;
+                            product.current_stock = newStock;
+                            stockUpdates.push({ productId: product.id, newStock });
+                            
+                            const movement = {
+                                id: crypto.randomUUID(),
+                                product_id: item.product_id,
+                                type: 'in',
+                                quantity: receivedQty,
+                                date: new Date(receiptDate).toISOString(),
+                                note: `Penerimaan dari Order ${order.order_number}`
+                            };
+                            stockMovements.push(movement);
+                            movementsToAdd.push(movement);
+                        }
+                    }
+                }
+    
+                // Update order status and items
+                order.items = updatedItems;
+                order.status = 'completed'; // Assuming any receipt completes the order
+                order.received_at = new Date(receiptDate).toISOString();
+                order.updated_at = new Date().toISOString();
+    
+                saveLocalData();
+                
+                // Re-render UI
+                closeModal('order-receipt-modal');
+                filterAndRenderOrders();
+                renderProducts();
+                updateDashboard();
+    
+                // Sync with Supabase
+                await updateRecord('orders', editingOrderId, {
+                    items: order.items,
+                    status: order.status,
+                    received_at: order.received_at,
+                    updated_at: order.updated_at
+                });
+                for (const update of stockUpdates) {
+                    await updateRecord('products', update.productId, { current_stock: update.newStock });
+                }
+                for (const movement of movementsToAdd) {
+                    await createRecord('stock_movements', movement);
+                }
+    
+                alert('Penerimaan barang berhasil dikonfirmasi dan stok telah diperbarui!');
+                editingOrderId = null;
+            };
+            (document.getElementById('order-receipt-form') as HTMLFormElement).addEventListener('submit', handleConfirmReceipt);
             
             // Set default dates
             setDefaultDates();
@@ -1405,15 +1577,6 @@ const App: React.FC = () => {
                 p.code.toLowerCase().includes(searchTerm)
             );
             populateStockCardSelect(filtered);
-        }
-
-        const handleOrderProductSearch = () => {
-            const searchTerm = (document.getElementById('order-product-search') as HTMLInputElement).value.toLowerCase();
-            const filtered = products.filter((p: any) => 
-                p.name.toLowerCase().includes(searchTerm) || 
-                p.code.toLowerCase().includes(searchTerm)
-            );
-            populateOrderProductSelects(filtered);
         }
 
         // Navigation
@@ -2009,11 +2172,12 @@ const App: React.FC = () => {
 
         const setDefaultDates = () => {
             const now = new Date();
-            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-            const dateString = now.toISOString().slice(0, 10);
+            const dateString = now.toISOString().split('T')[0];
             
             (document.getElementById('sales-date-from') as HTMLInputElement).value = dateString;
             (document.getElementById('sales-date-to') as HTMLInputElement).value = dateString;
+            (document.getElementById('order-date-from') as HTMLInputElement).value = '';
+            (document.getElementById('order-date-to') as HTMLInputElement).value = '';
         }
 
         const showModal = (modalId: string) => {
@@ -2037,6 +2201,14 @@ const App: React.FC = () => {
                 (document.getElementById('product-search-results') as HTMLElement).classList.add('hidden');
                 (document.getElementById('sale-product-search') as HTMLInputElement).value = '';
             }
+             if (modalId === 'order-form-modal') {
+                editingOrderId = null;
+                currentOrderItems = [];
+                (document.getElementById('order-product-search-results') as HTMLElement).classList.add('hidden');
+                (document.getElementById('order-product-search') as HTMLInputElement).value = '';
+                (document.getElementById('selected-order-product-id') as HTMLInputElement).value = '';
+                (document.getElementById('order-product-info') as HTMLElement).classList.add('hidden');
+            }
         }
 
         const formatCurrency = (amount: number) => {
@@ -2045,12 +2217,15 @@ const App: React.FC = () => {
         }
 
         const formatDate = (dateString: string) => {
+            if (!dateString) return 'N/A';
             return new Date(dateString).toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
         }
 
         const formatDateForExport = (dateString: string) => {
             if (!dateString) return '';
-            return new Date(dateString).toLocaleDateString('id-ID', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            const d = new Date(dateString);
+            const pad = (num: number) => num.toString().padStart(2, '0');
+            return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
         }
 
         const getTimeAgo = (dateString: string) => {
@@ -2098,187 +2273,505 @@ const App: React.FC = () => {
 
 
         // Order Management Functions
-        const renderOrders = () => {
+        const renderOrders = (filteredOrders: any[]) => {
             const tbody = (document.getElementById('orders-table') as HTMLElement);
-            let filteredOrders = orders;
-            
-            if (currentOrderFilter !== 'all') {
-                filteredOrders = orders.filter((order: any) => order.status === currentOrderFilter);
-            }
-            
-            const sortedOrders = filteredOrders.sort((a,b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-            const paginatedOrders = paginate(sortedOrders, currentPage.orders, ITEMS_PER_PAGE);
+            const paginatedOrders = paginate(filteredOrders, currentPage.orders, ITEMS_PER_PAGE);
 
             if (paginatedOrders.length === 0) {
-                const message = currentOrderFilter === 'all' ? 'Belum ada order.' : `Tidak ada order dengan status ${getStatusText(currentOrderFilter)}.`;
-                tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-gray-500">${message}</td></tr>`;
-                renderPagination('orders-pagination', currentPage.orders, sortedOrders.length, ITEMS_PER_PAGE, changeOrdersPage);
-                return;
+                tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-gray-500">Tidak ada order yang cocok dengan filter.</td></tr>`;
+            } else {
+                tbody.innerHTML = paginatedOrders.map((order: any) => {
+                    const statusBadge = getStatusBadge(order.status);
+                    const totalValue = (order.items || []).reduce((sum: number, item: any) => sum + (item.quantity_ordered * item.hpp_at_order), 0);
+                    const totalItems = (order.items || []).reduce((sum: number, item: any) => sum + item.quantity_ordered, 0);
+
+                    let actions = `<button onclick="viewOrder('${order.id}')" class="text-blue-600 hover:text-blue-900" title="Lihat Detail"><i class="fas fa-eye"></i></button>`;
+                    if (order.status === 'pending') {
+                        actions += `
+                            <button onclick="showApproveOrderModal('${order.id}')" class="text-green-600 hover:text-green-900" title="Setujui"><i class="fas fa-check"></i></button>
+                            <button onclick="rejectOrder('${order.id}')" class="text-yellow-600 hover:text-yellow-900" title="Tolak"><i class="fas fa-times"></i></button>`;
+                    }
+                    if (order.status === 'approved') {
+                        actions += `<button onclick="showConfirmReceiptModal('${order.id}')" class="text-green-600 hover:text-green-900" title="Konfirmasi Penerimaan"><i class="fas fa-check-double"></i></button>`;
+                    }
+                    actions += `<button onclick="deleteOrder('${order.id}')" class="text-red-600 hover:text-red-900" title="Hapus"><i class="fas fa-trash"></i></button>`;
+
+                    return `
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 text-sm font-medium text-gray-900">${order.order_number}</td>
+                            <td class="px-6 py-4 text-sm text-gray-900">${formatDate(order.created_at)}</td>
+                            <td class="px-6 py-4 text-sm text-gray-900">${totalItems} (${order.items?.length || 0} jenis)</td>
+                            <td class="px-6 py-4 text-sm text-gray-900">${formatCurrency(totalValue)}</td>
+                            <td class="px-6 py-4">${statusBadge}</td>
+                            <td class="px-6 py-4 text-sm font-medium"><div class="flex space-x-3">${actions}</div></td>
+                        </tr>
+                    `;
+                }).join('');
             }
-
-            tbody.innerHTML = paginatedOrders.map((order: any) => {
-                const product = products.find((p: any) => p.id === order.product_id);
-                const productName = product ? product.name : 'Produk tidak ditemukan';
-                const statusBadge = getStatusBadge(order.status);
-
-                return `
-                    <tr class="hover:bg-gray-50">
-                        <td class="px-6 py-4 text-sm font-medium text-gray-900">${order.order_number}</td>
-                        <td class="px-6 py-4 text-sm text-gray-900">${formatDate(order.created_at)}</td>
-                        <td class="px-6 py-4 text-sm text-gray-900">${productName}</td>
-                        <td class="px-6 py-4 text-sm text-gray-900">${order.quantity} ${product?.unit || ''}</td>
-                        <td class="px-6 py-4">${statusBadge}</td>
-                        <td class="px-6 py-4 text-sm font-medium">
-                            <div class="flex space-x-2">
-                                <button onclick="viewOrder('${order.id}')" class="text-blue-600 hover:text-blue-900" title="Lihat Detail"><i class="fas fa-eye"></i></button>
-                                ${order.status === 'pending' ? `
-                                    <button onclick="approveOrder('${order.id}')" class="text-green-600 hover:text-green-900" title="Setujui"><i class="fas fa-check"></i></button>
-                                    <button onclick="rejectOrder('${order.id}')" class="text-red-600 hover:text-red-900" title="Tolak"><i class="fas fa-times"></i></button>
-                                ` : ''}
-                                <button onclick="deleteOrder('${order.id}')" class="text-red-600 hover:text-red-900" title="Hapus"><i class="fas fa-trash"></i></button>
-                            </div>
-                        </td>
-                    </tr>
-                `;
-            }).join('');
-            renderPagination('orders-pagination', currentPage.orders, sortedOrders.length, ITEMS_PER_PAGE, changeOrdersPage);
+            renderPagination('orders-pagination', currentPage.orders, filteredOrders.length, ITEMS_PER_PAGE, changeOrdersPage);
         }
 
-        const changeOrdersPage = (page: number) => { currentPage.orders = page; renderOrders(); }
+        const filterAndRenderOrders = () => {
+            currentOrderFilter.search = (document.getElementById('order-search') as HTMLInputElement).value.toLowerCase();
+            currentOrderFilter.from = (document.getElementById('order-date-from') as HTMLInputElement).value;
+            currentOrderFilter.to = (document.getElementById('order-date-to') as HTMLInputElement).value;
 
-        const filterOrders = (status: string, event: any) => {
-            currentOrderFilter = status; currentPage.orders = 1;
+            let filtered = [...orders];
+
+            if (currentOrderFilter.status !== 'all') {
+                filtered = filtered.filter(o => o.status === currentOrderFilter.status);
+            }
+
+            if (currentOrderFilter.from) {
+                const fromDate = new Date(currentOrderFilter.from).getTime();
+                filtered = filtered.filter(o => new Date(o.created_at).getTime() >= fromDate);
+            }
+
+            if (currentOrderFilter.to) {
+                const toDate = new Date(currentOrderFilter.to).setHours(23, 59, 59, 999);
+                filtered = filtered.filter(o => new Date(o.created_at).getTime() <= toDate);
+            }
+
+            if (currentOrderFilter.search) {
+                filtered = filtered.filter(o => 
+                    o.order_number.toLowerCase().includes(currentOrderFilter.search) ||
+                    (o.items || []).some((item: any) => item.product_name.toLowerCase().includes(currentOrderFilter.search))
+                );
+            }
+            
+            const sortedOrders = filtered.sort((a,b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+            
+            currentPage.orders = 1;
+            renderOrders(sortedOrders);
+        }
+        
+        const resetOrderFilters = () => {
+            (document.getElementById('order-search') as HTMLInputElement).value = '';
+            (document.getElementById('order-date-from') as HTMLInputElement).value = '';
+            (document.getElementById('order-date-to') as HTMLInputElement).value = '';
+            filterAndRenderOrders();
+        }
+
+        const changeOrdersPage = (page: number) => { 
+            currentPage.orders = page; 
+            // We need to re-run the filter logic to get the correct dataset for the new page
+            filterAndRenderOrders();
+        }
+
+        const filterOrdersByStatus = (status: string, event: any) => {
+            currentOrderFilter.status = status;
             document.querySelectorAll('.order-tab-btn').forEach(btn => { btn.classList.remove('border-blue-500', 'text-blue-600'); btn.classList.add('border-transparent', 'text-gray-500'); });
             event.target.classList.add('border-blue-500', 'text-blue-600');
-            renderOrders();
+            filterAndRenderOrders();
         }
 
         const showCreateOrderModal = () => {
-            (document.getElementById('create-order-form') as HTMLFormElement).reset();
-            populateOrderProductSelects();
-            showModal('create-order-modal');
+            editingOrderId = null;
+            orderAction = 'create';
+            currentOrderItems = [];
+            
+            (document.getElementById('order-modal-title') as HTMLElement).textContent = 'Buat Order Stok Baru';
+            (document.getElementById('process-order-btn') as HTMLElement).innerHTML = `<i class="fas fa-paper-plane mr-2"></i>Kirim Order`;
+            (document.getElementById('process-order-btn') as HTMLButtonElement).className = 'flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-medium transition-colors';
+
+            const now = new Date();
+            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+            (document.getElementById('order-date') as HTMLInputElement).value = now.toISOString().slice(0, 16);
+            (document.getElementById('order-note') as HTMLTextAreaElement).value = '';
+            
+            updateOrderItemsTable();
+            showModal('order-form-modal');
         }
 
-        const handleCreateOrder = async (e: Event) => {
-            e.preventDefault();
-            const productId = (document.getElementById('order-product') as HTMLSelectElement).value;
-            const quantity = parseInt((document.getElementById('order-quantity') as HTMLInputElement).value);
+        const handleOrderSubmit = async () => {
+            if (currentOrderItems.length === 0) {
+                alert('Silakan tambahkan setidaknya satu produk ke order.');
+                return;
+            }
+
+            const orderDate = (document.getElementById('order-date') as HTMLInputElement).value;
             const note = (document.getElementById('order-note') as HTMLTextAreaElement).value;
 
-            const newOrder = {
-                id: crypto.randomUUID(),
-                order_number: 'ORD-' + Date.now().toString().slice(-6),
-                product_id: productId,
-                quantity: quantity,
-                note: note,
-                status: 'pending',
-                created_at: new Date().toISOString()
-            };
+            if (editingOrderId) { // This is an approval action
+                const orderIndex = orders.findIndex((o: any) => o.id === editingOrderId);
+                if (orderIndex === -1) {
+                    alert('Order tidak ditemukan!');
+                    return;
+                }
+                
+                const updatedItems = currentOrderItems.map(item => ({
+                    product_id: item.product_id,
+                    product_name: item.product_name,
+                    product_code: item.product_code,
+                    hpp_at_order: item.hpp_at_order,
+                    quantity_ordered: item.quantity,
+                    quantity_received: 0,
+                }));
 
-            orders.push(newOrder);
+                const updatedOrder = {
+                    ...orders[orderIndex],
+                    items: updatedItems,
+                    note: note,
+                    status: 'approved',
+                    updated_at: new Date().toISOString()
+                };
+                
+                orders[orderIndex] = updatedOrder;
+                await updateRecord('orders', editingOrderId, { items: updatedItems, note: note, status: 'approved', updated_at: updatedOrder.updated_at });
+                alert('Order berhasil disetujui!');
+
+            } else { // This is a new order creation
+                const newOrder = {
+                    id: crypto.randomUUID(),
+                    order_number: 'ORD-' + Date.now().toString().slice(-6),
+                    items: currentOrderItems.map(item => ({
+                        product_id: item.product_id,
+                        product_name: item.product_name,
+                        product_code: item.product_code,
+                        hpp_at_order: item.hpp_at_order,
+                        quantity_ordered: item.quantity,
+                        quantity_received: 0,
+                    })),
+                    note: note,
+                    status: 'pending',
+                    created_at: orderDate ? new Date(orderDate).toISOString() : new Date().toISOString(),
+                    received_at: null,
+                };
+
+                orders.push(newOrder);
+                await createRecord('orders', newOrder);
+                alert('Order berhasil dibuat!');
+            }
+
             saveLocalData();
-            closeModal('create-order-modal');
-            renderOrders();
-            
-            await createRecord('orders', newOrder);
-            alert('Order berhasil dibuat!');
+            closeModal('order-form-modal');
+            filterAndRenderOrders();
         }
+
 
         const viewOrder = (orderId: string) => {
             const order = orders.find((o: any) => o.id === orderId);
-            const product = products.find((p: any) => p.id === order.product_id);
-            const content = (document.getElementById('order-detail-content') as HTMLElement);
-            content.innerHTML = `<div class="space-y-3">...</div>`; // Truncated for brevity
-            const actions = (document.getElementById('order-actions') as HTMLElement);
-            if (order.status === 'pending') {
-                actions.innerHTML = `<button onclick="approveOrder('${order.id}'); closeModal('order-detail-modal');" class="flex-1 bg-green-600 ...">Setujui</button> ...`;
-            } else {
-                actions.innerHTML = `<button onclick="closeModal('order-detail-modal')" class="w-full bg-gray-300 ...">Tutup</button>`;
+            if (!order) {
+                alert('Order tidak ditemukan!');
+                return;
             }
-            showModal('order-detail-modal');
-        }
+            
+            const contentDiv = document.getElementById('order-detail-content') as HTMLElement;
+            const printableDiv = document.getElementById('order-detail-printable') as HTMLElement;
 
-        const approveOrder = async (orderId: string) => {
-            const approvalDateTime = new Date().toISOString();
+            const totalValue = (order.items || []).reduce((sum: number, item: any) => sum + (item.quantity_ordered * item.hpp_at_order), 0);
+
+            const detailsHTML = `
+                <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                    <div class="text-gray-500">No. Order</div><div class="font-medium">${order.order_number}</div>
+                    <div class="text-gray-500">Tanggal Order</div><div class="font-medium">${formatDate(order.created_at)}</div>
+                    <div class="text-gray-500">Status</div><div>${getStatusBadge(order.status)}</div>
+                    <div class="text-gray-500">Total Nilai</div><div class="font-medium">${formatCurrency(totalValue)}</div>
+                    ${order.received_at ? `<div class="text-gray-500">Tanggal Diterima</div><div class="font-medium">${formatDate(order.received_at)}</div>` : ''}
+                </div>
+                <div class="mt-4 border-t pt-4">
+                    <h4 class="font-semibold mb-2">Item Order:</h4>
+                    <table class="w-full text-sm">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-3 py-2 text-left">Produk</th>
+                                <th class="px-3 py-2 text-left">Qty Order</th>
+                                ${order.status === 'completed' ? '<th class="px-3 py-2 text-left">Qty Diterima</th>' : ''}
+                                <th class="px-3 py-2 text-left">HPP</th>
+                                <th class="px-3 py-2 text-left">Subtotal</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        ${(order.items || []).map((item: any) => `
+                            <tr>
+                                <td class="p-2">${item.product_name} (${item.product_code})</td>
+                                <td class="p-2">${item.quantity_ordered}</td>
+                                ${order.status === 'completed' ? `<td class="p-2">${item.quantity_received}</td>` : ''}
+                                <td class="p-2">${formatCurrency(item.hpp_at_order)}</td>
+                                <td class="p-2">${formatCurrency(item.quantity_ordered * item.hpp_at_order)}</td>
+                            </tr>
+                        `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+                ${order.note ? `<div class="mt-4 border-t pt-4"><h4 class="font-semibold mb-1">Catatan:</h4><p class="text-sm text-gray-600">${order.note}</p></div>` : ''}
+            `;
+            
+            contentDiv.innerHTML = detailsHTML;
+            printableDiv.innerHTML = detailsHTML; // For printing
+            win.currentOrderToPrint = order;
+            showModal('order-detail-modal');
+        };
+
+        const printOrder = () => {
+            const order = win.currentOrderToPrint;
+            if (!order) return;
+
+            const totalValue = (order.items || []).reduce((sum: number, item: any) => sum + (item.quantity_ordered * item.hpp_at_order), 0);
+            
+            const printContent = `
+                <div style="font-family: sans-serif; font-size: 12px; width: 800px; margin: auto;">
+                    <h2 style="text-align: center;">DETAIL ORDER</h2>
+                    <hr>
+                    <table style="width: 100%; margin-bottom: 20px;">
+                        <tr><td style="width: 150px;">No. Order:</td><td><strong>${order.order_number}</strong></td></tr>
+                        <tr><td>Tanggal Order:</td><td><strong>${formatDate(order.created_at)}</strong></td></tr>
+                        <tr><td>Status:</td><td><strong>${order.status.toUpperCase()}</strong></td></tr>
+                        <tr><td>Total Nilai:</td><td><strong>${formatCurrency(totalValue)}</strong></td></tr>
+                        ${order.received_at ? `<tr><td>Tanggal Diterima:</td><td><strong>${formatDate(order.received_at)}</strong></td></tr>` : ''}
+                    </table>
+                    <h3 style="margin-bottom: 10px;">Item yang Dipesan</h3>
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead style="background-color: #f3f4f6;">
+                            <tr>
+                                <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Produk</th>
+                                <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Qty Order</th>
+                                ${order.status === 'completed' ? '<th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Qty Diterima</th>' : ''}
+                                <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">HPP</th>
+                                <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Subtotal</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        ${(order.items || []).map((item: any) => `
+                            <tr>
+                                <td style="border: 1px solid #ddd; padding: 8px;">${item.product_name} (${item.product_code})</td>
+                                <td style="border: 1px solid #ddd; padding: 8px;">${item.quantity_ordered}</td>
+                                ${order.status === 'completed' ? `<td style="border: 1px solid #ddd; padding: 8px;">${item.quantity_received}</td>` : ''}
+                                <td style="border: 1px solid #ddd; padding: 8px;">${formatCurrency(item.hpp_at_order)}</td>
+                                <td style="border: 1px solid #ddd; padding: 8px;">${formatCurrency(item.quantity_ordered * item.hpp_at_order)}</td>
+                            </tr>
+                        `).join('')}
+                        </tbody>
+                    </table>
+                     ${order.note ? `<div style="margin-top: 20px;"><h3 style="margin-bottom: 5px;">Catatan:</h3><p>${order.note}</p></div>` : ''}
+                </div>
+            `;
+            
+            const printWindow = window.open('', '_blank');
+            if (printWindow) {
+                printWindow.document.write(printContent);
+                printWindow.document.close();
+                printWindow.focus();
+                printWindow.print();
+            }
+        };
+
+        const showApproveOrderModal = (orderId: string) => {
             const order = orders.find((o: any) => o.id === orderId);
             if (!order) return;
             
-            order.status = 'approved';
-            order.updated_at = approvalDateTime;
-            
-            const product = products.find((p: any) => p.id === order.product_id);
-            product.current_stock += order.quantity;
-            
-            const movement = {
-                id: crypto.randomUUID(),
-                product_id: order.product_id,
-                type: 'in',
-                quantity: order.quantity,
-                date: approvalDateTime,
-                note: `Order disetujui - ${order.order_number}`
-            };
-            stockMovements.push(movement);
-            
-            saveLocalData();
-            renderOrders();
-            renderProducts();
-            updateDashboard();
+            editingOrderId = orderId;
+            orderAction = 'approve';
+            currentOrderItems = (order.items || []).map((item: any) => ({
+                product_id: item.product_id,
+                product_name: item.product_name,
+                product_code: item.product_code,
+                hpp_at_order: item.hpp_at_order,
+                quantity: item.quantity_ordered,
+            }));
 
-            await updateRecord('orders', orderId, { status: 'approved', updated_at: approvalDateTime });
-            await updateRecord('products', product.id, { current_stock: product.current_stock });
-            await createRecord('stock_movements', movement);
-            
-            alert('Order disetujui dan stok ditambahkan!');
-        }
+            (document.getElementById('order-modal-title') as HTMLElement).textContent = `Review & Approve Order ${order.order_number}`;
+            (document.getElementById('process-order-btn') as HTMLElement).innerHTML = `<i class="fas fa-check-circle mr-2"></i>Konfirmasi & Setujui`;
+            (document.getElementById('process-order-btn') as HTMLButtonElement).className = 'flex-1 bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-medium transition-colors';
+            (document.getElementById('order-date') as HTMLInputElement).value = new Date(order.created_at).toISOString().slice(0, 16);
+            (document.getElementById('order-note') as HTMLTextAreaElement).value = order.note || '';
+
+            updateOrderItemsTable();
+            showModal('order-form-modal');
+        };
 
         const rejectOrder = async (orderId: string) => {
-            const order = orders.find((o: any) => o.id === orderId);
-            if (!order) return;
-            order.status = 'rejected';
-            order.updated_at = new Date().toISOString();
-            // FIX: Changed saveData to saveLocalData
-            saveLocalData();
-            renderOrders();
+            if (!confirm('Apakah Anda yakin ingin menolak order ini?')) return;
             
-            await updateRecord('orders', orderId, { status: 'rejected', updated_at: order.updated_at });
+            const orderIndex = orders.findIndex((o: any) => o.id === orderId);
+            if (orderIndex === -1) return;
+            
+            orders[orderIndex].status = 'rejected';
+            orders[orderIndex].updated_at = new Date().toISOString();
+            
+            saveLocalData();
+            filterAndRenderOrders();
+            
+            await updateRecord('orders', orderId, { status: 'rejected', updated_at: orders[orderIndex].updated_at });
             alert('Order telah ditolak.');
         }
 
         const getStatusBadge = (status: string) => {
             const badges: { [key: string]: string } = {
                 pending: '<span class="px-2 py-1 text-xs font-semibold bg-yellow-100 text-yellow-800 rounded-full">Menunggu</span>',
-                approved: '<span class="px-2 py-1 text-xs font-semibold bg-green-100 text-green-800 rounded-full">Disetujui</span>',
+                approved: '<span class="px-2 py-1 text-xs font-semibold bg-blue-100 text-blue-800 rounded-full">Disetujui</span>',
+                completed: '<span class="px-2 py-1 text-xs font-semibold bg-green-100 text-green-800 rounded-full">Selesai</span>',
                 rejected: '<span class="px-2 py-1 text-xs font-semibold bg-red-100 text-red-800 rounded-full">Ditolak</span>'
             };
             return badges[status] || status;
         }
+        const showConfirmReceiptModal = (orderId: string) => {
+            const order = orders.find((o: any) => o.id === orderId);
+            if (!order || !order.items) {
+                alert('Order tidak ditemukan atau tidak memiliki item!');
+                return;
+            }
+            
+            editingOrderId = orderId;
+            const itemsListDiv = document.getElementById('receipt-items-list') as HTMLElement;
+            const today = new Date().toISOString().split('T')[0];
+            (document.getElementById('receipt-date') as HTMLInputElement).value = today;
 
-        const getStatusText = (status: string) => ({ pending: 'Menunggu', approved: 'Disetujui', rejected: 'Ditolak' }[status] || status);
+            itemsListDiv.innerHTML = `
+                <h4 class="font-semibold text-gray-800 border-b pb-2 mb-3">Item Dipesan</h4>
+                ${order.items.map((item: any, index: number) => `
+                    <div class="grid grid-cols-3 gap-4 items-center mb-2 p-2 bg-gray-50 rounded-lg">
+                        <div class="col-span-3 sm:col-span-1">
+                            <label class="block text-sm font-medium text-gray-700">${item.product_name}</label>
+                            <p class="text-xs text-gray-500">Dipesan: ${item.quantity_ordered}</p>
+                        </div>
+                        <div class="col-span-3 sm:col-span-2">
+                             <label for="receipt-qty-${index}" class="block text-sm font-medium text-gray-700 mb-1">Jumlah Diterima</label>
+                             <input type="number" id="receipt-qty-${index}" data-product-id="${item.product_id}" value="${item.quantity_ordered}" min="0" max="${item.quantity_ordered}" required class="w-full px-3 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+                `).join('')}
+            `;
+            
+            showModal('order-receipt-modal');
+        };
 
         const deleteOrder = async (orderId: string) => {
-             if (!confirm('Hapus order ini?')) return;
-             const order = orders.find((o: any) => o.id === orderId);
-             if (!order) return;
-             
-             if (order.status === 'approved') {
-                 const product = products.find((p: any) => p.id === order.product_id);
-                 if (product) product.current_stock -= order.quantity;
-             }
-             
+             if (!confirm('Hapus order ini? Aksi ini tidak dapat dibatalkan.')) return;
              orders = orders.filter((o: any) => o.id !== orderId);
-            // FIX: Changed saveData to saveLocalData
-            saveLocalData();
-             renderOrders();
-             
+             saveLocalData();
+             filterAndRenderOrders();
              await deleteRecord('orders', orderId);
              alert('Order berhasil dihapus!');
         }
 
-        const populateOrderProductSelects = (filteredList?: any[]) => {
-            const select = (document.getElementById('order-product') as HTMLSelectElement);
-            const productList = filteredList || products;
-            select.innerHTML = '<option value="">Pilih produk</option>' + productList.map((p: any) => `<option value="${p.id}">${p.name} (${p.code}) - Stok: ${p.current_stock}</option>`).join('');
-        }
+        const updateOrderItemsTable = () => {
+            const tbody = (document.getElementById('order-items-table') as HTMLElement);
+            if (currentOrderItems.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="px-3 py-8 text-center text-gray-400">Belum ada produk ditambahkan</td></tr>';
+            } else {
+                tbody.innerHTML = currentOrderItems.map((item, index) => `
+                    <tr class="border-b">
+                        <td class="p-2 align-top">${item.product_name} <span class="text-xs text-gray-500">(${item.product_code})</span></td>
+                        <td class="p-2 align-top"><input type="number" value="${item.quantity}" onchange="updateOrderItemQuantity(${index}, this.value)" class="w-16 p-1 border rounded" min="1"></td>
+                        <td class="p-2 align-top">${formatCurrency(item.hpp_at_order)}</td>
+                        <td class="p-2 align-top font-medium">${formatCurrency(item.quantity * item.hpp_at_order)}</td>
+                        <td class="p-2 align-top">
+                            <button type="button" onclick="removeItemFromOrder(${index})" class="text-red-500 hover:text-red-700"><i class="fas fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+            const grandTotal = currentOrderItems.reduce((sum, item) => sum + (item.quantity * item.hpp_at_order), 0);
+            (document.getElementById('order-grand-total') as HTMLElement).textContent = formatCurrency(grandTotal);
+        };
+        win.updateOrderItemQuantity = (index: number, newQuantity: string) => {
+            const qty = parseInt(newQuantity, 10);
+            if (qty > 0 && currentOrderItems[index]) {
+                currentOrderItems[index].quantity = qty;
+                updateOrderItemsTable();
+            }
+        };
+
+        const removeItemFromOrder = (index: number) => {
+            currentOrderItems.splice(index, 1);
+            updateOrderItemsTable();
+        };
+
+        const clearOrderItems = () => {
+            if (confirm('Hapus semua item dari order ini?')) {
+                currentOrderItems = [];
+                updateOrderItemsTable();
+            }
+        };
+        
+        const addItemToOrder = () => {
+            const productId = (document.getElementById('selected-order-product-id') as HTMLInputElement).value;
+            const quantityInput = (document.getElementById('order-item-quantity') as HTMLInputElement);
+            const quantity = parseInt(quantityInput.value, 10);
+            const product = products.find((p: any) => p.id === productId);
+
+            if (!product) {
+                alert('Silakan pilih produk dari hasil pencarian.');
+                return;
+            }
+            if (isNaN(quantity) || quantity <= 0) {
+                alert('Masukkan jumlah yang valid.');
+                return;
+            }
+
+            const existingItem = currentOrderItems.find(item => item.product_id === productId);
+            if (existingItem) {
+                existingItem.quantity += quantity;
+            } else {
+                currentOrderItems.push({
+                    product_id: product.id,
+                    product_name: product.name,
+                    product_code: product.code,
+                    hpp_at_order: product.hpp,
+                    quantity: quantity,
+                });
+            }
+
+            updateOrderItemsTable();
+            quantityInput.value = '';
+            (document.getElementById('selected-order-product-id') as HTMLInputElement).value = '';
+            (document.getElementById('order-product-search') as HTMLInputElement).value = '';
+            (document.getElementById('order-product-info') as HTMLElement).classList.add('hidden');
+        };
+
+        const updateOrderProductInfo = (product: any) => {
+            const infoDiv = (document.getElementById('order-product-info') as HTMLElement);
+            if (!product) {
+                infoDiv.classList.add('hidden');
+                return;
+            }
+            
+            (document.getElementById('order-available-stock') as HTMLElement).textContent = `${product.current_stock} ${product.unit}`;
+            (document.getElementById('order-product-hpp') as HTMLElement).textContent = formatCurrency(product.hpp);
+            infoDiv.classList.remove('hidden');
+        };
+        
+        const searchOrderProducts = () => {
+            const searchTerm = (document.getElementById('order-product-search') as HTMLInputElement).value.toLowerCase();
+            const resultsContainer = (document.getElementById('order-product-search-results') as HTMLElement);
+            
+            if (searchTerm.length < 1) { // Show on focus or single char
+                resultsContainer.classList.add('hidden');
+                resultsContainer.innerHTML = '';
+                return;
+            }
+
+            const filtered = products.filter((p: any) =>
+                p.name.toLowerCase().includes(searchTerm) ||
+                p.code.toLowerCase().includes(searchTerm)
+            );
+
+            if (filtered.length > 0) {
+                resultsContainer.innerHTML = filtered.slice(0, 5).map((p: any) => `
+                    <div onclick="selectOrderProductFromSearch('${p.id}')" class="p-3 hover:bg-blue-50 cursor-pointer border-b last:border-b-0">
+                        <div class="font-medium">${p.name} (${p.code})</div>
+                        <div class="text-sm text-gray-600">Stok: ${p.current_stock} | HPP: ${formatCurrency(p.hpp)}</div>
+                    </div>
+                `).join('');
+            } else {
+                resultsContainer.innerHTML = '<div class="p-3 text-center text-gray-500">Produk tidak ditemukan</div>';
+            }
+            
+            resultsContainer.classList.remove('hidden');
+        };
+
+        const selectOrderProductFromSearch = (productId: string) => {
+            const product = products.find((p: any) => p.id === productId);
+            if (!product) return;
+
+            (document.getElementById('selected-order-product-id') as HTMLInputElement).value = productId;
+            (document.getElementById('order-product-search') as HTMLInputElement).value = `${product.name} (${product.code})`;
+            updateOrderProductInfo(product);
+
+            (document.getElementById('order-product-search-results') as HTMLElement).classList.add('hidden');
+        };
+
 
         const renderSales = () => {
             const paginatedSales = paginate(filteredSales, currentPage.sales, ITEMS_PER_PAGE);
@@ -2347,6 +2840,43 @@ const App: React.FC = () => {
             
             createExcelFileXLS(exportReadyData, filename, 'Laporan Penjualan');
             alert(`Laporan penjualan berhasil diekspor sebagai ${filename}!`);
+        };
+        
+        const exportOrdersData = () => {
+             // Re-run filter logic to get the latest filtered list
+            const search = (document.getElementById('order-search') as HTMLInputElement).value.toLowerCase();
+            const from = (document.getElementById('order-date-from') as HTMLInputElement).value;
+            const to = (document.getElementById('order-date-to') as HTMLInputElement).value;
+            const status = currentOrderFilter.status;
+
+            let filtered = [...orders];
+            if (status !== 'all') filtered = filtered.filter(o => o.status === status);
+            if (from) filtered = filtered.filter(o => new Date(o.created_at).getTime() >= new Date(from).getTime());
+            if (to) filtered = filtered.filter(o => new Date(o.created_at).getTime() <= new Date(to).setHours(23, 59, 59, 999));
+            if (search) filtered = filtered.filter(o => o.order_number.toLowerCase().includes(search) || (o.items || []).some((item: any) => item.product_name.toLowerCase().includes(search)));
+
+            if (filtered.length === 0) {
+                alert("Tidak ada data order untuk diekspor pada periode ini.");
+                return;
+            }
+
+            const exportReadyData = filtered.flatMap(order => 
+                (order.items || []).map((item: any) => ({
+                    'No Order': order.order_number,
+                    'Tanggal Order': formatDateForExport(order.created_at),
+                    'Kode Produk': item.product_code,
+                    'Nama Produk': item.product_name,
+                    'Qty Order': item.quantity_ordered,
+                    'Qty Diterima': item.quantity_received,
+                    'HPP Saat Order': item.hpp_at_order,
+                    'Subtotal': item.quantity_ordered * item.hpp_at_order,
+                    'Status': order.status,
+                    'Tanggal Diterima': formatDateForExport(order.received_at)
+                }))
+            );
+
+            const filename = `laporan-order-${new Date().toISOString().split('T')[0]}.xls`;
+            createExcelFileXLS(exportReadyData, filename, 'Laporan Order');
         };
 
         const createExcelFileXLS = (data: any[], filename: string, sheetName = 'Sheet1') => {
@@ -2579,11 +3109,12 @@ const App: React.FC = () => {
         };
 
         const downloadOrderTemplate = () => {
-            const headers = ["product_code", "quantity", "note", "status"];
+            const headers = ["product_code", "quantity_ordered", "note"];
             const sampleData = [
-                ["SKU001", 50, "Stok mingguan", "pending"],
-                ["SKU002", 24, "Request tambahan", "pending"]
+                ["SKU001", 50, "Stok mingguan"],
+                ["SKU002", 24, "Request tambahan"]
             ];
+            alert("Template Order: Setiap baris adalah satu item produk dalam sebuah transaksi. Sistem akan menggabungkan semua baris menjadi satu order saat import.");
             downloadCSV('template_order_stok.csv', headers, sampleData);
         };
         
@@ -3582,7 +4113,7 @@ const App: React.FC = () => {
         // --- GLOBAL ASSIGNMENTS ---
         win.showSection = showSection; win.toggleMobileMenu = toggleMobileMenu;
         win.showAddProductModal = showAddProductModal; win.exportData = exportData;
-        win.filterOrders = filterOrders; win.showCreateOrderModal = showCreateOrderModal;
+        win.filterOrdersByStatus = filterOrdersByStatus; win.showCreateOrderModal = showCreateOrderModal; win.exportOrdersData = exportOrdersData;
         win.filterSales = filterSales; win.showCreateSaleModal = showCreateSaleModal;
         win.exportSalesData = exportSalesData; win.showStockInModal = showStockInModal;
         win.showStockOutModal = showStockOutModal; win.exportStockCard = exportStockCard;
@@ -3598,8 +4129,9 @@ const App: React.FC = () => {
         win.importStockMovementData = importStockMovementData;
         win.closeModal = closeModal; win.viewProduct = viewProduct;
         win.editProduct = editProduct; win.deleteProduct = deleteProduct;
-        win.approveOrder = approveOrder; win.rejectOrder = rejectOrder;
-        win.viewOrder = viewOrder; win.deleteOrder = deleteOrder;
+        win.showApproveOrderModal = showApproveOrderModal; win.rejectOrder = rejectOrder;
+        win.viewOrder = viewOrder; win.deleteOrder = deleteOrder; win.printOrder = printOrder;
+        win.showConfirmReceiptModal = showConfirmReceiptModal;
         win.selectProductFromSearch = selectProductFromSearch; win.addItemToSale = addItemToSale;
         win.clearSaleItems = clearSaleItems; win.processSale = processSale;
         win.removeItemFromSale = removeItemFromSale; win.viewSale = viewSale;
@@ -3608,6 +4140,10 @@ const App: React.FC = () => {
         win.deleteCategory = deleteCategory; win.showPaymentModal = showPaymentModal;
         win.editSale = editSale; win.applyDashboardFilter = applyDashboardFilter;
         win.resetDashboardFilter = resetDashboardFilter;
+        win.filterAndRenderOrders = filterAndRenderOrders; win.resetOrderFilters = resetOrderFilters;
+        win.addItemToOrder = addItemToOrder; win.removeItemFromOrder = removeItemFromOrder;
+        win.clearOrderItems = clearOrderItems; win.handleOrderSubmit = handleOrderSubmit;
+        win.selectOrderProductFromSearch = selectOrderProductFromSearch;
         win.onPageChange = {}; // Setup pagination handler object
 
         // --- ONLINE/OFFLINE LISTENERS ---
@@ -3634,6 +4170,66 @@ declare global {
         onPageChange: { [key: string]: (page: number) => void };
         supabase: any; // Add Supabase to window type
         currentReceiptSale?: any;
+        currentOrderToPrint?: any;
+        // Add function signatures for all globally exposed functions
+        showSection: (sectionName: string, event?: any) => void;
+        toggleMobileMenu: () => void;
+        showAddProductModal: () => void;
+        exportData: () => void;
+        filterOrdersByStatus: (status: string, event: any) => void;
+        showCreateOrderModal: () => void;
+        exportOrdersData: () => void;
+        filterSales: () => void;
+        showCreateSaleModal: () => void;
+        exportSalesData: () => void;
+        showStockInModal: () => void;
+        showStockOutModal: () => void;
+        exportStockCard: () => void;
+        addCategory: () => void;
+        downloadProductTemplate: () => void;
+        downloadCategoryTemplate: () => void;
+        downloadStockMovementTemplate: () => void;
+        downloadOrderTemplate: () => void;
+        downloadSaleTemplate: () => void;
+        importProductsData: () => void;
+        saveSettings: () => void;
+        backupData: () => void;
+        restoreData: () => void;
+        importSalesData: () => void;
+        importStockMovementData: () => void;
+        closeModal: (modalId: string) => void;
+        viewProduct: (productId: string) => void;
+        editProduct: (productId: string) => void;
+        deleteProduct: (productId: string) => void;
+        showApproveOrderModal: (orderId: string) => void;
+        rejectOrder: (orderId: string) => void;
+        viewOrder: (orderId: string) => void;
+        deleteOrder: (orderId: string) => void;
+        printOrder: () => void;
+        showConfirmReceiptModal: (orderId: string) => void;
+        selectProductFromSearch: (productId: string) => void;
+        addItemToSale: () => void;
+        clearSaleItems: () => void;
+        processSale: () => void;
+        removeItemFromSale: (index: number) => void;
+        viewSale: (saleId: string) => void;
+        printReceipt: () => void;
+        printSaleReceipt: (saleId: string) => void;
+        confirmIndentPayment: (saleId: string) => void;
+        deleteSale: (saleId: string) => void;
+        deleteCategory: (categoryName: string) => void;
+        showPaymentModal: (saleId: string) => void;
+        editSale: (saleId: string) => void;
+        applyDashboardFilter: () => void;
+        resetDashboardFilter: () => void;
+        filterAndRenderOrders: () => void;
+        resetOrderFilters: () => void;
+        addItemToOrder: () => void;
+        removeItemFromOrder: (index: number) => void;
+        clearOrderItems: () => void;
+        handleOrderSubmit: () => void;
+        updateOrderItemQuantity: (index: number, newQuantity: string) => void;
+        selectOrderProductFromSearch: (productId: string) => void;
     }
     // Add import.meta.env for Vite
     interface ImportMeta {
